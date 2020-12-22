@@ -816,9 +816,8 @@ elif choice == 'Login':
                     st.plotly_chart(stagefig)
                     
                     
-                
                 elif report == 'User Profiles':
-                    if result[0][1].lower().split('@')[0] in ['nzubechukwu','ayo','nujie']:
+                    if result[0][1].lower().split('@')[0] in ['nzubechukwu','ayo','nujinim']:
                         st.subheader(f'Jude-X - User Profiles & Update Figures')
                         user_result = view_all_users()
                         user_emails = [x[1] for x in user_result]
@@ -930,12 +929,12 @@ elif choice == 'Login':
                     
                     verticalprorevfig, verticalmonrevfig = vertical_budget_graphs(dfteamrev_prod,dfteamrev_month)
                     col2t.subheader('Revenue by Merchants')
-                    teamrev_merchfig = table_fig(dfteamrev_merch)
+                    teamrev_merchfig = table_fig(dfteamrev_merch,wide=1000)
                     col2t.plotly_chart(teamrev_merchfig)
-                    col2t.markdown('---')
-                    col2t.plotly_chart(verticalmonrevfig)
                     st.markdown('---')
-                    col2t.plotly_chart(verticalprorevfig)
+                    st.plotly_chart(verticalmonrevfig)
+                    st.markdown('---')
+                    st.plotly_chart(verticalprorevfig)
                 
                 elif report == 'Pipeline Performance Report':
                     dfpip = get_pipeline()
