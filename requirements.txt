@@ -12,7 +12,6 @@ google-auth-httplib2==0.0.4
 google-auth-oauthlib==0.4.2
 googleapis-common-protos==1.52.0
 numpy==1.18.5
-numpydoc @ file:///tmp/build/80754af9/numpydoc_1594166760263/work
 oauthlib==3.1.0
 pandas @ file:///C:/ci/pandas_1592833613419/work
 pipreqs==0.4.10
@@ -20,8 +19,6 @@ plotly==4.12.0
 psycopg2==2.8.6
 python-dateutil==2.8.1
 python-dotenv==0.15.0
-python-jsonrpc-server @ file:///tmp/build/80754af9/python-jsonrpc-server_1594397536060/work
-python-language-server @ file:///C:/ci/python-language-server_1594162130238/work
 requests @ file:///tmp/build/80754af9/requests_1592841827918/work
 requests-oauthlib==1.3.0
 SQLAlchemy @ file:///C:/ci/sqlalchemy_1593445271541/work
