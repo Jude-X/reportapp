@@ -1,0 +1,32 @@
+dash==1.16.3
+dash-bootstrap-components==0.10.7
+dash-core-components==1.12.1
+dash-html-components==1.1.1
+dash-renderer==1.8.2
+dash-table==4.10.1
+decorator==4.4.2
+google-api-core==1.23.0
+google-api-python-client==1.12.5
+google-auth==1.23.0
+google-auth-httplib2==0.0.4
+google-auth-oauthlib==0.4.2
+googleapis-common-protos==1.52.0
+matplotlib @ file:///C:/ci/matplotlib-base_1592837548929/work
+numpy==1.18.5
+numpydoc @ file:///tmp/build/80754af9/numpydoc_1594166760263/work
+oauthlib==3.1.0
+pandas @ file:///C:/ci/pandas_1592833613419/work
+pandocfilters==1.4.2
+pipreqs==0.4.10
+plotly==4.12.0
+psycopg2==2.8.6
+python-dateutil==2.8.1
+python-dotenv==0.15.0
+python-jsonrpc-server @ file:///tmp/build/80754af9/python-jsonrpc-server_1594397536060/work
+python-language-server @ file:///C:/ci/python-language-server_1594162130238/work
+requests @ file:///tmp/build/80754af9/requests_1592841827918/work
+requests-oauthlib==1.3.0
+SQLAlchemy @ file:///C:/ci/sqlalchemy_1593445271541/work
+statsmodels==0.11.1
+streamlit==0.70.0
+streamlit-echarts==0.1.0
