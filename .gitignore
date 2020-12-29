@@ -1,3 +1,5 @@
 .env
 *.csv
 *.ipynb
+bio.py
+*pdf
