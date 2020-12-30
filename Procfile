@@ -1,1 +1,1 @@
-web: sh setup.sh && streamlit run judexstreamlitreportapp.py
+web: sh setup.sh && streamlit run reportapp.py
