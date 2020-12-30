@@ -30,7 +30,7 @@ img = Image.open('flutterwavelogo.jpg')
 st.set_page_config(page_title='Flutterwave Dashboard', layout='wide')
 
 
-result1 = urlparse(os.getenv("DATABASE_URL"))
+result1 = urlparse(os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
 # also in python 3+ use: urlparse("YourUrl") not urlparse.urlparse("YourUrl")
 username = result1.username
 password = result1.password
