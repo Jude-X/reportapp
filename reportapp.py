@@ -76,7 +76,7 @@ def get_data(conn):
         else:
             cols[i] = cols[i].title()
 
-    #dfmain.columns = cols
+    dfmain.columns = cols
 
     return dfmain
 # Database Functions
