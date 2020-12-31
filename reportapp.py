@@ -59,7 +59,7 @@ def get_data(conn):
     #dfmain = pd.read_csv('data.csv', parse_dates=['Date'])
     cols = dfmain.columns.tolist()
     for i in range(len(cols)):
-        if cols[i] in ['tpv', 'tpc', 'tpv$', 'id','date']:
+        if cols[i] in ['tpv', 'tpc', 'tpv$', 'id']:
             cols[i] = cols[i].upper()
 
         elif cols[i] in ['product_fx', 'new_ex', 'merchname2']:
