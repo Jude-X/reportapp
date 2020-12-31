@@ -55,8 +55,8 @@ def get_data(conn):
         This function gets data from a csv file. Once the data warehouse project is complete,
         itll be configured to take data from database
     '''
-    dfmain = psql.read_sql('SELECT * FROM datatable WHERE date = ', conn, parse_dates='date')
-    for df in pd.read_sql("Select * from timeseries", conn, ):
+    dfmain = psql.read_sql('SELECT * FROM datatable', conn, parse_dates='date')
+    #for df in pd.read_sql("Select * from timeseries", conn, ):
     #dfmain = pd.read_csv('data.csv', parse_dates=['Date'])
     cols = dfmain.columns.tolist()
     for i in range(len(cols)):
