@@ -8,7 +8,7 @@ import streamlit as st
 def user_profile(c, conn, result):
     if result[0][4]:
         st.subheader(f'User Profiles')
-        col1, col2 = st.beta_columns(2)
+        col1, col3, col2, col4 = st.beta_columns([2, 0.5, 1, 0.5])
         with col1:
             dfusers = view_all_users(conn)
             user_emails = dfusers.Email.tolist()
@@ -16,7 +16,7 @@ def user_profile(c, conn, result):
                 'Select email to Delete', user_emails)
             delete_user(c, del_email)
             dfusersfig = table_fig(
-                dfusers[['Team', 'Email', 'Admin']], wide=750)
+                dfusers[['Team', 'Email', 'Admin']], wide=850)
             st.plotly_chart(dfusersfig)
             st.markdown(get_table_download_link(
                 dfusers, 'Signed Up Users'), unsafe_allow_html=True)
@@ -26,7 +26,7 @@ def user_profile(c, conn, result):
             del_appuser_email = st.multiselect(
                 'Select email to Delete', appuser_emails)
             delete_appuser(c, del_appuser_email)
-            dfappusersfig = table_fig(dfappusers[['Email', 'ID']], wide=750)
+            dfappusersfig = table_fig(dfappusers[['Email', 'ID']], wide=550)
             st.plotly_chart(dfappusersfig)
 
             st.markdown(get_table_download_link(

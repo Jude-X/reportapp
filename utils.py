@@ -735,9 +735,9 @@ def currency_note(conn, year, lastweekyear, thisweek, lastweek, currency_selecte
                 SELECT year,
                 week,
                 currency,
-                Product,
+                subproduct,
                 merchname2,
-                SUM("rev$") Rev$,
+                SUM("rev$") AS Rev$
                 FROM datatable
                 WHERE year IN %(s3)s AND  
                 week IN %(s4)s AND 
@@ -805,12 +805,12 @@ def weekly_new_old_merch(conn, merlist, year):
     dfNew1 = psql.read_sql('''
                        SELECT merchname2,
                        week,
-                       SUM("rev$") Rev$
+                       SUM("rev$") AS Rev$
                        FROM datatable
                        WHERE year = %(s1)s AND
                        merchname2 IN %(s2)s 
                        GROUP BY 1,2
-                       ORDER BY 3 DESC
+                       
                        ''',
                            conn, params={'s1': year, 's2': tuple(merlist)})
 
@@ -827,11 +827,15 @@ def weekly_new_old_merch(conn, merlist, year):
     for i in range(2, len(cols[1:])):
         dfNewp[cols[i+1]] = dfNewp1[cols[i]]-dfNewp1[cols[i-1]]
     dfNewp.fillna(0, inplace=True)
-    col2dis = [cols[0], *cols[-10:]]
-    return dfNewp[col2dis]
-
+    try:
+        col2dis = [cols[0], *cols[-10:]]
+        return dfNewp[col2dis]
+    except Exception:
+        return dfNewp
 
 # Team Function
+
+
 def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat, team_parameter, team_merch):
     if 'All' in team_name:
         if 'All' in team_merch:

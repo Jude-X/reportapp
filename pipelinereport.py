@@ -33,7 +33,7 @@ def pipeline_report(c, result, all_team=None):
     livetarget = get_livetarget(c, team_name)[2]
     livefig, stagefig = pipeline_tracker_graphs(
         numoflive, dfstage, livetarget)
-    colp1, colp3, colp2 = st.beta_columns([1.5, 0.10, 3])
+    colp1, colp3, colp2, colp4 = st.beta_columns([1.5, 0.10, 3, 0.25])
     colp1.plotly_chart(bar_indicator(
         value=pipeStat[1], ref=pipeStat[0], title=f'Live Expected Revenue Achieved'))
     colp1.plotly_chart(bar_indicator(

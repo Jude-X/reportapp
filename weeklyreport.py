@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from utils import week_summary, week_exfx_summary, week_colpay_summary, week_barter_performance, pos_agency, currency_performance, cohort_analysis, get_table_download_link, weekly_new_old_merch
+import pandas.io.sql as psql
+from utils import week_summary, week_exfx_summary, week_colpay_summary, week_barter_performance, pos_agency, currency_performance, cohort_analysis, get_table_download_link, weekly_new_old_merch, currency_note
 from graphs import weekly_report_graphs, card_indicators, card_indicators2, table_fig
 from db import get_weeklynewold_merch, update_weeklynewold_merch, delete_weeklynewold_merch, edit_notes, view_notes
 
@@ -183,7 +184,7 @@ def weekly_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr,
             currency_selected = st.multiselect(
                 'Select Currencies', all_cur)
             dfcurnot = currency_note(
-                dfmain, year, lastweekyear, thisweek, lastweek, currency_selected)
+                conn, year, lastweekyear, thisweek, lastweek, currency_selected)
             st.dataframe(dfcurnot)
 
     st.markdown('---')
@@ -218,7 +219,6 @@ def weekly_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr,
         del_merch_name2 = col14.multiselect(
             'Search Exisiting Merchants to Delete..', dfoldmer.MerchName2.tolist())
         delete_weeklynewold_merch(c, 'old', del_merch_name2)
-
     dfoldmerch = weekly_new_old_merch(conn, dfoldmer.MerchName2.tolist(), year)
     dfoldmerchfig = table_fig(dfoldmerch, wide=1250)
     st.plotly_chart(dfoldmerchfig)
