@@ -178,8 +178,10 @@ def weekly_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr,
             notecurr = st.text_area(
                 f'Enter currency note for {today1.strftime("%d-%B-%Y")}')
             edit_notes(c, today1, notecurr, "WeeklyCurrency")
+            all_cur = psql.read_sql('SELECT DISTINCT currency FROM datatable',
+                                    conn).currency.tolist()
             currency_selected = st.multiselect(
-                'Select Currencies', dfmain.Currency.value_counts().index.tolist())
+                'Select Currencies', all_cur)
             dfcurnot = currency_note(
                 dfmain, year, lastweekyear, thisweek, lastweek, currency_selected)
             st.dataframe(dfcurnot)
