@@ -152,11 +152,11 @@ elif choice == 'Login':
 
                 elif report == 'SME Report':
 
-                    sme_report()
+                    sme_report(today1)
 
                 elif report == 'Barter Report':
 
-                    barter_report()
+                    barter_report(today1)
 
                 elif report == 'Budget Performance Report':
 
