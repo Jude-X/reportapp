@@ -2,8 +2,9 @@ import streamlit as st
 import bcrypt
 import datetime
 import pandas
+import pandas.io.sql as psql
 
-# \COPY datatable(TPV, TPC, Fees, Month, Date, Currency, Merchants, country, Product, Product2, Product3, TPV$, Rev$, Day, Product4, Week, Vertical, Global, Product_FX, New_Ex, MerchName2, Category, Classification, Quarter, DayOfWeek, DayName, Year) FROM 'C:\Users\Nzubechukwu Onyekaba\Desktop\project\data.csv' DELIMITER ',' CSV HEADER encoding 'UTF8';
+# \COPY datatable(Merchants, MerchName2, TPV, TPC, Fees, Rev$, TPV$, Day, Date, Week, Month, Quarter, Year, Currency, Country, Product, SubProduct, Vertical, Category, Classification) FROM 'C:\Users\Nzubechukwu Onyekaba\Desktop\project\data.csv' DELIMITER ',' CSV HEADER encoding 'UTF8';
 # get data function
 
 
@@ -12,39 +13,32 @@ def data_table(c):
         '''
     CREATE TABLE IF NOT EXISTS datatable(
 	ID BIGSERIAL PRIMARY KEY,
-	TPV DECIMAL(13,2) DEFAULT 0,
+    Merchants VARCHAR(300) DEFAULT NULL,
+    MerchName2 VARCHAR(250) DEFAULT NULL,
+	TPV DECIMAL(15,2) DEFAULT 0,
     TPC BIGINT DEFAULT 1 CHECK (TPC>=0),
-    Fees DECIMAL(13,2) DEFAULT 0,
+    Fees DECIMAL(15,2) DEFAULT 0,
+    Rev$ DECIMAL(13,2) DEFAULT 0,
+    TPV$ DECIMAL(15,2) DEFAULT 0,
+    Day SMALLINT DEFAULT NULL CHECK (Day<=31),
+    Date TIMESTAMP DEFAULT NULL,
+    Week SMALLINT DEFAULT NULL CHECK (Week<=53),
 	Month SMALLINT DEFAULT NULL CHECK (Month<=12),
-	Date TIMESTAMP DEFAULT NULL,
-	Currency VARCHAR(4) DEFAULT NULL,
-	Merchants VARCHAR(250) DEFAULT NULL,
-	country VARCHAR(3) DEFAULT NULL,
-	Product VARCHAR(100) DEFAULT NULL,
-	Product2 VARCHAR(75) DEFAULT NULL,
-	Product3 VARCHAR(25) DEFAULT NULL,
-	TPV$ DECIMAL(13,2) DEFAULT 0,
-	Rev$ DECIMAL(11,2) DEFAULT 0,
-	Day SMALLINT DEFAULT NULL CHECK (Day<=31),
-	Product4 VARCHAR(25) DEFAULT NULL,
-	Week SMALLINT DEFAULT NULL CHECK (Week<=53),
-	Vertical VARCHAR(25) DEFAULT NULL,
-	Global VARCHAR(25) DEFAULT NULL,
-	Product_FX VARCHAR(15) DEFAULT NULL,
-	New_Ex VARCHAR(18) DEFAULT NULL,
-	MerchName2 VARCHAR(250) DEFAULT NULL,
-	Category VARCHAR(15) DEFAULT NULL,
-	Classification VARCHAR(10) DEFAULT NULL,
 	Quarter SMALLINT DEFAULT NULL CHECK (Quarter<=4),
-	DayOfWeek SMALLINT DEFAULT NULL CHECK (DayOfWeek<=9),
-	DayName VARCHAR(5) DEFAULT NULL,
-	Year SMALLINT DEFAULT NULL CHECK (Year>=2016)
+    Year SMALLINT DEFAULT NULL CHECK (Year>=2016),
+	Currency VARCHAR(4) DEFAULT NULL,
+	Country VARCHAR(3) DEFAULT NULL,
+	Product VARCHAR(100) DEFAULT NULL,
+	SubProduct VARCHAR(150) DEFAULT NULL,
+	Vertical VARCHAR(30) DEFAULT NULL,
+	Category VARCHAR(25) DEFAULT NULL,
+	Classification VARCHAR(20) DEFAULT NULL
     )
     ''')
 
 
 def create_usertable(c):
-    c.execute('CREATE TABLE IF NOT EXISTS userstable(id SERIAL PRIMARY KEY, email VARCHAR(50) UNIQUE, vertical VARCHAR(25), password VARCHAR)')
+    c.execute('CREATE TABLE IF NOT EXISTS userstable(id SERIAL PRIMARY KEY, email VARCHAR(50) UNIQUE, vertical VARCHAR(25), password VARCHAR, admin BOOLEAN DEFAULT FALSE)')
 
 
 def add_userdata(c, email, vertical, password):
@@ -68,10 +62,11 @@ def create_targetable(c):
     c.execute('CREATE TABLE IF NOT EXISTS targetable(id SERIAL PRIMARY KEY, last_month_target INTEGER, month_target INTEGER, year_target INTEGER)')
 
 
-def view_all_users(c):
-    c.execute('SELECT * FROM userstable')
-    data = c.fetchall()
-    return data
+def view_all_users(conn):
+    dfusers = psql.read_sql('''SELECT * FROM userstable''',
+                            conn)
+    dfusers.columns = ['id', 'Email', 'Team', 'Password', 'Admin']
+    return dfusers
 
 
 def view_all_targets(c):
@@ -94,12 +89,6 @@ def update_target(c, lastmonthtarget=0, monthtarget=0, yeartarget=0):
 
 def get_target(c):
     c.execute('SELECT * FROM targetable WHERE id = 1')
-    data = c.fetchall()
-    return data
-
-
-def view_target(c):
-    c.execute('SELECT * FROM targetable')
     data = c.fetchall()
     return data
 
@@ -221,7 +210,7 @@ def get_vertarget(c, team_name):
 
 def get_livetarget(c, team_name):
     c.execute('SELECT * FROM livetargetable WHERE vertical = %s', (team_name))
-    data = c.fetchall()
+    data = c.fetchone()
     return data
 
 
@@ -279,7 +268,7 @@ def delete_user(c, del_email):
     if del_email:
         try:
             for email in del_email:
-                c.execute('DELETE FROM projection WHERE email = %s', ([email]))
+                c.execute('DELETE FROM userstable WHERE email = %s', ([email]))
         except Exception:
             st.warning(f'Failed to delete {del_email}, please try again')
         else:
@@ -288,10 +277,11 @@ def delete_user(c, del_email):
         pass
 
 
-def get_bestcase(c):
-    c.execute('SELECT * FROM projection')
-    data = c.fetchall()
-    return data
+def get_bestcase(conn):
+    dfpro = psql.read_sql('''SELECT * FROM projection''', conn)
+    dfpro.columns = ['SN', 'MerchName2', 'bestCase']
+    dfpro = dfpro.iloc[:, 1:]
+    return dfpro
 
 
 def create_weeklynewold_merch(c):
@@ -346,5 +336,47 @@ def delete_weeklynewold_merch(c, new_old, del_merch_name2):
                 f'{del_merch_name2} Failed to delete Merchant, please try again')
         else:
             st.success(f'{del_merch_name2} deleted sucessfully')
+    else:
+        pass
+
+
+def create_appusertable(c):
+    c.execute(
+        ''' CREATE TABLE IF NOT EXISTS appusertable(id SERIAL PRIMARY KEY, email VARCHAR(50) UNIQUE) ''')
+
+
+def view_all_appusers(conn):
+    dfappusers = psql.read_sql('''
+                    SELECT *
+                    FROM appusertable
+                    ''', conn)
+    dfappusers.columns = ['ID', 'Email']
+    return dfappusers
+
+
+def add_appuser(c, email):
+    if '@flutterwavego' in email:
+        try:
+            c.execute(
+                ''' INSERT INTO appusertable(email) VALUES (%s)''', ([email]))
+        except:
+            st.warning('User already permmitted')
+    elif 'Enter Email Here..' in email:
+        pass
+    else:
+        st.warning('Invalid Email')
+
+
+def delete_appuser(c, del_appuser_email):
+    if del_appuser_email:
+        try:
+            for name in del_appuser_email:
+                c.execute(
+                    'DELETE FROM appusertable WHERE email = %s', ([name]))
+        except Exception:
+            st.warning(
+                f'{del_appuser_email} Failed to delete Merchant, please try again')
+        else:
+            st.success(f'{del_appuser_email} deleted sucessfully')
     else:
         pass
