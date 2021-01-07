@@ -78,5 +78,5 @@ def budget_performance_report(conn, result, month, monthtarget, mtdsumthis, year
     col2t.plotly_chart(verticalmonrevfig)
     col2ta.plotly_chart(verticalprorevfig)
     col5ta.subheader('Revenue by Merchants')
-    dfteamrev_merchfig = table_fig(dfteamrev_merch, wide=600)
+    dfteamrev_merchfig = table_fig(dfteamrev_merch, wide=550)
     col5ta.plotly_chart(dfteamrev_merchfig)

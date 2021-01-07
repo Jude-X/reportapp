@@ -1,6 +1,6 @@
 import streamlit as st
 from utils import gainers_losers, accmer_monthrev
-from graphs import table_fig
+from graphs import table_fig, acct_mgt_graphs
 from db import view_notes, edit_notes
 import pandas.io.sql as psql
 
@@ -31,7 +31,7 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear, all_
                 f'Enter gainers note for {today1.strftime("%d-%B-%Y")}')
             edit_notes(c, today1, gainersnote, "AccMgtGain")
 
-    gainfig = table_fig(dfxxgain, wide=1350)
+    gainfig = table_fig(dfxxgain, wide=1250)
     st.plotly_chart(gainfig)
 
     st.markdown("---")
@@ -49,7 +49,7 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear, all_
                 f'Enter losers note for {today1.strftime("%d-%B-%Y")}')
             edit_notes(c, today1, losersnote, "AccMgtLoss")
 
-    lossfig = table_fig(dfxxloss, wide=1350)
+    lossfig = table_fig(dfxxloss, wide=1250)
     st.plotly_chart(lossfig)
 
     all_accmer = ['All'] + \
@@ -59,5 +59,5 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear, all_
     st.markdown("---")
     st.subheader('Monthly Revenue By Merchants')
     dfaccmer = accmer_monthrev(conn, year, ['Ent & NFIs'], accmer_selected)
-    dfaccmerfig = table_fig(dfaccmer, wide=1350)
+    dfaccmerfig = acct_mgt_graphs(dfaccmer)
     st.plotly_chart(dfaccmerfig)

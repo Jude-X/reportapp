@@ -861,7 +861,8 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 range(team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1))})
             dfmain.columns = [
                 'Product', 'Year', 'MerchName2', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
-            dfteamrev1 = dfmain.groupby(team_parameter)[["Rev$"]].sum()
+            dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
+                ["Rev$"]].sum()
             dfteamrev1 = dfteamrev1.sort_values(
                 by='Rev$', ascending=False).reset_index()
         elif 'All' not in team_merch:
@@ -888,7 +889,8 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1)), 's7': tuple(team_merch)})
             dfmain.columns = [
                 'Product', 'Year', 'MerchName2', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
-            dfteamrev1 = dfmain.groupby(team_parameter)[["Rev$"]].sum()
+            dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
+                ["Rev$"]].sum()
             dfteamrev1 = dfteamrev1.sort_values(
                 by='Rev$', ascending=False).reset_index()
 
@@ -917,7 +919,8 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 range(team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1)), 's7': tuple(team_name)})
             dfmain.columns = [
                 'Product', 'Year', 'MerchName2', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
-            dfteamrev1 = dfmain.groupby(team_parameter)[["Rev$"]].sum()
+            dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
+                ["Rev$"]].sum()
             dfteamrev1 = dfteamrev1.sort_values(
                 by='Rev$', ascending=False).reset_index()
         elif 'All' not in team_merch:
@@ -945,7 +948,8 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1)), 's7': tuple(team_merch), 's8': tuple(team_name)})
             dfmain.columns = [
                 'Product', 'Year', 'MerchName2', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
-            dfteamrev1 = dfmain.groupby(team_parameter)[["Rev$"]].sum()
+            dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
+                ["Rev$"]].sum()
             dfteamrev1 = dfteamrev1.sort_values(
                 by='Rev$', ascending=False).reset_index()
     else:
@@ -1147,15 +1151,7 @@ def accmer_monthrev(conn, year, team_name, accmer_selected):
                                         [year]), 's3': tuple(team_name), 's4': tuple(accmer_selected)}
                                     )
     dfaccmerraw.columns = ['MerchName2', 'Month', 'Rev$']
-    dfaccmer = pd.pivot_table(dfaccmerraw,
-                              index='MerchName2',
-                              values='Rev$',
-                              columns=['Month'],
-                              fill_value=0,
-                              aggfunc=np.sum,
-                              )
-    dfaccmer = dfaccmer.reset_index()
-    dfaccmer.sort_values(dfaccmer.columns.tolist()
-                         [-1], ascending=False, inplace=True)
-    dfaccmer = dfaccmer.reset_index(drop=True)
+    dfaccmer = dfaccmerraw.groupby(['Month'])[
+        ['Rev$']].sum().reset_index()
+
     return dfaccmer

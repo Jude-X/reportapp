@@ -202,7 +202,7 @@ def vertical_budget_graphs(dfteamrev_prod, dfteamrev_month):
                text=dfteamrev_prod.iloc[:, 1].values.tolist(), textfont_color="white", texttemplate='%{text:.2s}', textposition='inside')
     ])
     verticalprorevfig.update_layout(title='Revenue By Product', xaxis=dict(title='Revenue ($)'),
-                                    autosize=True, width=650, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                                    autosize=True, width=600, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
     verticalprorevfig.update_yaxes(type='category')
     verticalprorevfig.update_xaxes(gridcolor='#C0C0C0')
@@ -216,6 +216,18 @@ def vertical_budget_graphs(dfteamrev_prod, dfteamrev_month):
                                     yaxis=dict(gridcolor='#C0C0C0'), autosize=True, width=1150, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
     return verticalprorevfig, verticalmonrevfig
+
+
+def acct_mgt_graphs(dfaccmer):
+    accmonrevfig = go.Figure(data=[
+        go.Bar(x=dfaccmer.iloc[:, 0].values.tolist(), y=dfaccmer.iloc[:, 1].values.tolist(), marker_color='#4169e1',
+               text=dfaccmer.iloc[:, 1].values.tolist(), textfont_color="white", texttemplate='%{text:.2s}', textposition='inside')
+    ])
+
+    accmonrevfig.update_layout(title='Revenue By Month', xaxis=dict(tickmode='linear', dtick=1),
+                               yaxis=dict(gridcolor='#C0C0C0'), autosize=True, width=1150, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+
+    return accmonrevfig
 
 
 def pipeline_tracker_graphs(numoflive, dfstage, livetarget=250):
@@ -241,7 +253,7 @@ def pipeline_tracker_graphs(numoflive, dfstage, livetarget=250):
     stagefig.update_layout({'title': 'Prospective Merchants by Stage', "xaxis": {"title": "Stages", 'zeroline': False},
                             "yaxis": {'zeroline': False, 'showline': False, 'visible': False},
                             "autosize": True, "height": 400, "width": 1350, "paper_bgcolor": 'rgba(0,0,0,0)', "plot_bgcolor": 'rgba(0,0,0,0)',
-                            "barmode": "stack", "legend": {"orientation": "h", "y": -0.18}})
+                            "barmode": "stack", "legend": {"orientation": "h", "y": -0.18, 'traceorder': 'normal'}})
 
     return livefig, stagefig
 
