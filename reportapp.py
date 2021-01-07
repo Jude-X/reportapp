@@ -11,7 +11,7 @@ import numpy as np
 import calendar
 from utils import team_rev, today_dates, yesterday_dates, week_dates, month_dates, year_dates, color_change, pro_color_change, df_sum, mtd, ytd, get_table_download_link, daily_product_notes, week_summary, week_exfx_summary, week_colpay_summary, week_barter_performance, pos_agency, currency_performance, currency_note, weekly_new_old_merch, cohort_analysis, get_pipeline, process_pipeline, projection, gainers_losers
 from graphs import daily_report_graphs, weekly_report_graphs, vertical_budget_graphs, pipeline_tracker_graphs, card_indicators, card_indicators2, table_fig, bar_indicator
-from db import data_table, create_notes, create_usertable, create_bestcase, login_user, create_targetable, get_target, create_vertargetable, create_livetargetable, create_weeklynewold_merch,  create_appusertable
+from db import data_table, create_notes, create_usertable, create_bestcase, view_all_targets, login_user, create_targetable, edit_vertargetable, get_vertarget, get_target, create_vertargetable, create_livetargetable, create_weeklynewold_merch,  create_appusertable
 from dailyreport import daily_report
 from weeklyreport import weekly_report
 from smereport import sme_report
@@ -40,7 +40,8 @@ st.set_page_config(page_title='Flutterwave Report App', layout='wide')
 
 
 # os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
-result1 = urlparse(os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
+result1 = urlparse(
+    os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
 # also in python 3+ use: urlparse("YourUrl") not urlparse.urlparse("YourUrl")
 username = result1.username
 password = result1.password
@@ -81,13 +82,13 @@ create_appusertable(c)
 st.image(img, width=300)
 
 menu = ['Home', 'Login', 'SignUp']
-reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report', 'Budget Performance Report',
-           'Pipeline Performance Report', 'Account Management Report', 'User Profiles']
+reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report',
+           'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report', 'User Profiles']
 
 choice = st.sidebar.selectbox('Menu', menu)
 
 teams = ['Commercial', 'Head AM'] + \
-    psql.read_sql('SELECT DISTINCT vertical FROM datatable',
+    psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL''',
                   conn).vertical.tolist()
 
 # Query to get the list of merchants from the database
@@ -97,7 +98,7 @@ all_mer = ['All'] + \
 
 # Query to get the list of verticals from the database
 all_team = [
-    'All']+psql.read_sql('SELECT DISTINCT vertical FROM datatable', conn).vertical.tolist()
+    'All']+psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL ''', conn).vertical.tolist()
 
 if choice == 'Home':
     st.subheader('Home Page')
@@ -110,7 +111,6 @@ elif choice == 'Login':
         'Password', 'Enter Password Here..', type='password')
     if st.sidebar.button('Login') or session_state.checkboxed:
         result = login_user(c, email, password1)
-        # st.write(result)
         if result:
             session_state.checkboxed = True
             st.sidebar.success(f'Logged In As {email.title().split("@")[0]}')
@@ -137,9 +137,13 @@ elif choice == 'Login':
                     conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays)
 
                 ytdsum, fyrunrate = ytd(conn, today1, daysleft)
+                try:
+                    lastmonthtarget, monthtarget, yeartarget = get_target(c)[
+                        0][1:4]
+                except Exception:
+                    update_target(c, 8000000,
+                                  8000000, 65900000)
 
-                lastmonthtarget, monthtarget, yeartarget = get_target(c)[
-                    0][1:4]
                 if report == 'Daily Report':
 
                     daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, yest, todaystr, today, month, lastmonth1,
@@ -165,8 +169,8 @@ elif choice == 'Login':
 
                 elif report == 'Account Management Report':
 
-                    acct_mgt_report(c, conn, result, today1, thismonth,
-                                    year, all_team)
+                    acct_mgt_report(c, conn, result, today1,
+                                    thismonth, year, lastweekyear, all_team)
 
                 elif report == 'Pipeline Performance Report':
 
@@ -178,48 +182,69 @@ elif choice == 'Login':
 
             elif result[0][2] == 'Head AM':
 
-                report = st.sidebar.radio('Navigation', reports[5:7])
+                report = st.sidebar.radio('Navigation', reports[4:6])
 
                 if report == 'Account Management Report':
 
-                    acct_mgt_report(c, conn, result, today1, thismonth,
-                                    year, all_team)
+                    acct_mgt_report(c, conn, result, today1,
+                                    thismonth, year, lastweekyear, all_team)
 
-                elif report == 'Pipeline Performance Report':
+                elif report == 'Budget Performance Report':
 
-                    pipeline_report(c, result, all_team)
+                    team_name = ['Ent & NFIs']
+
+                    if result[0][4]:
+                        with st.beta_expander("Enter Budget"):
+                            monthtarget2 = st.number_input(
+                                f"What is {month[0:3]} target", value=0)
+                            yeartarget2 = st.number_input(
+                                f"What is {year} target", value=0)
+                            edit_vertargetable(
+                                c, team_name, monthtarget2, yeartarget2)
+
+                    try:
+                        monthtarget, yeartarget = get_vertarget(c, team_name)[
+                            0][2:]
+                    except Exception:
+                        edit_vertargetable(c, team_name, 1000000, 1000000)
+                        monthtarget, yeartarget = get_vertarget(c, team_name)[
+                            0][2:]
+
+                    mtdsumthis, mtdsumlast, runrate, runratelast, dfmtd = mtd(
+                        conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name)
+
+                    ytdsum, fyrunrate = ytd(conn, today1, daysleft, team_name)
+
+                    budget_performance_report(
+                        conn, result, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
 
             elif result[0][2] in teams:
                 email == result[0][1].lower()
-                report = st.sidebar.radio('Navigation', reports[4:6])
+                report = st.sidebar.radio('Navigation', reports[5:7])
                 team_name = result[0][2].split()
 
                 all_mer = ['All'] + \
-                    psql.read_sql('''SELECT DISTINCT merchname2 FROM datatable WHERE vertical =  %(s6)s''',
-                                  conn, params={'s6': team_name}).merchname2.tolist()
-
-                today1, today, todaystr = today_dates(c)
-
-                yesterday1, yest, yesstr = yesterday_dates(today1)
-
-                thisweek, lastweek, lastweekyear = week_dates()
-
-                lastmonth1, lastmonth, month, thismonth = month_dates(
-                    today1)
-
-                year, numofdays, lastnumofdays, daysinyr, daysleft = year_dates(
-                    today1)
+                    psql.read_sql('''SELECT DISTINCT merchname2 FROM datatable WHERE vertical IN %(s6)s''',
+                                  conn, params={'s6': tuple(team_name)}).merchname2.tolist()
 
                 if report == 'Budget Performance Report':
 
                     if result[0][4]:
                         with st.beta_expander("Enter Budget"):
+                            monthtarget2 = st.number_input(
+                                f"What is {month[0:3]} target", value=0)
                             yeartarget2 = st.number_input(
-                                f"What is {year} target", value=100000)
+                                f"What is {year} target", value=0)
+                            edit_vertargetable(
+                                c, team_name, monthtarget2, yeartarget2)
 
-                            edit_vertargetable(c, team_name, yeartarget2)
-
-                    yeartarget = get_vertarget(c, team_name)[0][2]
+                    try:
+                        monthtarget, yeartarget = get_vertarget(c, team_name)[
+                            0][2:]
+                    except Exception:
+                        edit_vertargetable(c, team_name, 1000000, 1000000)
+                        monthtarget, yeartarget = get_vertarget(c, team_name)[
+                            0][2:]
 
                     mtdsumthis, mtdsumlast, runrate, runratelast, dfmtd = mtd(
                         conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name)

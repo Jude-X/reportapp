@@ -112,7 +112,7 @@ def df_sum(conn, today1, yesterday1, todaystr, today, yesstr, yest):
     sqlyesterday = yesterday1.strftime("%Y-%m-%d")
     dfsum = psql.read_sql('''
                         WITH t1 AS (
-                        SELECT product AS Product, 
+                        SELECT product AS Product,
                         date,
                         SUM("tpv$") TPV$,
                         SUM("rev$") Rev$,
@@ -120,9 +120,9 @@ def df_sum(conn, today1, yesterday1, todaystr, today, yesstr, yest):
                         FROM datatable
                         WHERE date IN (%(s1)s,%(s2)s)
                         GROUP BY 1, 2),
-                        
+
                         t2 AS (
-                        SELECT vertical AS Product, 
+                        SELECT vertical AS Product,
                         date,
                         SUM("tpv$") TPV$,
                         SUM("rev$") Rev$,
@@ -130,7 +130,7 @@ def df_sum(conn, today1, yesterday1, todaystr, today, yesstr, yest):
                         FROM datatable
                         WHERE date IN (%(s1)s,%(s2)s) AND vertical = 'Agency'
                         GROUP BY 1, 2)
-                        
+
                         SELECT *
                         FROM t1
                         UNION
@@ -163,21 +163,21 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
     if not team_name:
         dfmtd = psql.read_sql('''
                             WITH t1 AS (
-                            SELECT product AS Product, 
+                            SELECT product AS Product,
                             month,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s 
+                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s
                             GROUP BY 1, 2),
-                            
+
                             t2 AS (
-                            SELECT product AS Product, 
+                            SELECT product AS Product,
                             month,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s 
+                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s
                             GROUP BY 1, 2)
-                            
+
                             SELECT *
                             FROM t1
                             UNION
@@ -190,7 +190,7 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
                             SELECT day,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s 
+                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s
                             GROUP BY 1
                             ''',
                                  conn, params={'s1': sqltodayday, 's2': sqlthismonth, 's3': sqlthismonthyear})
@@ -199,53 +199,53 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
                             SELECT day,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s 
+                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s
                             GROUP BY 1
                             ''',
                                      conn, params={'s1': sqltodayday, 's4': sqllastmonth, 's5': sqllastmonthyear})
     else:
         dfmtd = psql.read_sql('''
                             WITH t1 AS (
-                            SELECT product AS Product, 
+                            SELECT product AS Product,
                             month,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s AND vertical = %(s6)s
+                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s AND vertical IN %(s6)s
                             GROUP BY 1, 2),
-                            
+
                             t2 AS (
-                            SELECT product AS Product, 
+                            SELECT product AS Product,
                             month,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s AND vertical = %(s6)s
+                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s AND vertical IN %(s6)s
                             GROUP BY 1, 2)
-                            
+
                             SELECT *
                             FROM t1
                             UNION
                             SELECT *
                             FROM t2
                             ''',
-                              conn, params={'s1': sqltodayday, 's2': sqlthismonth, 's3': sqlthismonthyear, 's4': sqllastmonth, 's5': sqllastmonthyear, 's6': team_name})
+                              conn, params={'s1': sqltodayday, 's2': sqlthismonth, 's3': sqlthismonthyear, 's4': sqllastmonth, 's5': sqllastmonthyear, 's6': tuple(team_name)})
 
         dfsumrun = psql.read_sql('''
                             SELECT day,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s AND vertical = %(s6)s
+                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s AND vertical IN %(s6)s
                             GROUP BY 1
                             ''',
-                                 conn, params={'s1': sqltodayday, 's2': sqlthismonth, 's3': sqlthismonthyear, 's6': team_name})
+                                 conn, params={'s1': sqltodayday, 's2': sqlthismonth, 's3': sqlthismonthyear, 's6': tuple(team_name)})
 
         dfsumrunlast = psql.read_sql('''
                             SELECT day,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s AND vertical = %(s6)s
+                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s AND vertical IN %(s6)s
                             GROUP BY 1
                             ''',
-                                     conn, params={'s1': sqltodayday, 's4': sqllastmonth, 's5': sqllastmonthyear, 's6': team_name})
+                                     conn, params={'s1': sqltodayday, 's4': sqllastmonth, 's5': sqllastmonthyear, 's6': tuple(team_name)})
     dfmtd.columns = ['Product', 'Month', 'Rev$']
     dfsumrun.columns = dfsumrunlast.columns = ['Day', 'Rev$']
     dfmtd = dfmtd.pivot_table(
@@ -275,7 +275,7 @@ def ytd(conn, today1, daysleft, team_name=None):
                         SELECT date,
                         SUM("rev$") Rev$
                         FROM datatable
-                        WHERE year = %(s3)s 
+                        WHERE year = %(s3)s
                         GROUP BY 1
                         ''',
                                    conn, params={'s3': sqlthismonthyear})
@@ -284,10 +284,10 @@ def ytd(conn, today1, daysleft, team_name=None):
                         SELECT date,
                         SUM("rev$") Rev$
                         FROM datatable
-                        WHERE year = %(s3)s AND vertical =  %(s6)s 
+                        WHERE year = %(s3)s AND vertical IN  %(s6)s
                         GROUP BY 1
                         ''',
-                                   conn, params={'s3': sqlthismonthyear, 's6': team_name})
+                                   conn, params={'s3': sqlthismonthyear, 's6': tuple(team_name)})
     dfyrsumrun.columns = ['Date', 'Rev$']
     ytdsum = round(dfyrsumrun['Rev$'].sum(), 2)
     dfyrsumrun['Avg1'] = dfyrsumrun['Rev$'].rolling(window=4).mean()
@@ -318,7 +318,7 @@ def daily_product_notes(conn, today1, yesterday1, yesstr, yest, todaystr, today,
     for product in product_selected:
 
         qthis = f'''
-            SELECT product, 
+            SELECT product,
             REPLACE(merchname2,'Critical Ideas, Inc.','Chipper Cash App') AS merchname2,
             currency,
             SUM({metric.lower()})
@@ -328,7 +328,7 @@ def daily_product_notes(conn, today1, yesterday1, yesstr, yest, todaystr, today,
             ORDER BY 4
             '''
 
-        qlast = f'''SELECT product, 
+        qlast = f'''SELECT product,
             REPLACE(merchname2,'Critical Ideas, Inc.','Chipper Cash App')AS merchname2,
             currency,
             SUM({metric.lower()})
@@ -432,7 +432,7 @@ def week_summary(conn, today1, year, lastweekyear, thisweek, lastweek, thismonth
                         SELECT day,
                         SUM("rev$") Rev$
                         FROM datatable
-                        WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s 
+                        WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s
                         GROUP BY 1
                         ''',
                              conn, params={'s1': today1.day, 's2': thismonth, 's3': year})
@@ -510,9 +510,9 @@ def week_exfx_summary(conn, today1, year, dfweek, dflastweek, thisweek, thismont
                         SELECT day,
                         SUM("rev$") Rev$
                         FROM datatable
-                        WHERE day <= %(s1)s AND 
-                        month = %(s2)s AND 
-                        year = %(s3)s AND 
+                        WHERE day <= %(s1)s AND
+                        month = %(s2)s AND
+                        year = %(s3)s AND
                         product != 'FX'
                         GROUP BY 1
                         ''',
@@ -568,7 +568,7 @@ def week_barter_performance(conn, lastweekyear, year, thisweek, lastweek, dfweek
                     SELECT week,
                     SUM("rev$") Rev$
                     FROM datatable
-                    WHERE year = %(s3)s AND 
+                    WHERE year = %(s3)s AND
                     product = 'Barter'
                     GROUP BY 1
                         ''', conn, params={'s3': year})
@@ -578,19 +578,19 @@ def week_barter_performance(conn, lastweekyear, year, thisweek, lastweek, dfweek
                         week,
                         SUM("tpv$") TPV$
                         FROM datatable
-                        WHERE year = %(s3)s AND 
+                        WHERE year = %(s3)s AND
                         product = 'Barter' AND
-                        subproduct IN ('Airtime', 'Bills', 'Barter Send Money to Bank', 'Card Transactions','Mvisa Qr Payment', 'Card Issuance Fee', 'Pay with Barter', 'Send Money', 'Wallet Funding')     
+                        subproduct IN ('Airtime', 'Bills', 'Barter Send Money to Bank', 'Card Transactions','Mvisa Qr Payment', 'Card Issuance Fee', 'Pay with Barter', 'Send Money', 'Wallet Funding')
                         GROUP BY 1,2
                             ''', conn, params={'s3': year})
 
     dfBarter = psql.read_sql('''
                         SELECT subproduct,
                         SUM("rev$") Rev$,
-                        SUM("tpv$") TPV$, 
+                        SUM("tpv$") TPV$,
                         SUM("tpc") TPC
                         FROM datatable
-                        WHERE year = %(s1)s AND 
+                        WHERE year = %(s1)s AND
                         week = %(s2)s AND
                         product = 'Barter' AND
                         subproduct IN ('Airtime', 'Bills', 'Barter Send Money to Bank', 'Card Transactions','Mvisa Qr Payment', 'Card Issuance Fee', 'Pay with Barter', 'Send Money', 'Wallet Funding')
@@ -601,10 +601,10 @@ def week_barter_performance(conn, lastweekyear, year, thisweek, lastweek, dfweek
     dfBarterLast = psql.read_sql('''
                         SELECT subproduct,
                         SUM("rev$") Rev$,
-                        SUM("tpv$") TPV$, 
+                        SUM("tpv$") TPV$,
                         SUM("tpc") TPC
                         FROM datatable
-                        WHERE year = %(s1)s AND 
+                        WHERE year = %(s1)s AND
                         week = %(s2)s AND
                         product = 'Barter' AND
                         subproduct IN ('Airtime','Bills','Barter Send Money to Bank', 'Card Transactions','Mvisa Qr Payment', 'Card Issuance Fee', 'Pay with Barter', 'Send Money', 'Wallet Funding')
@@ -618,10 +618,10 @@ def week_barter_performance(conn, lastweekyear, year, thisweek, lastweek, dfweek
         'Product', 'Rev$', 'TPV$', 'TPC']
     dfB = dfBarterLast.merge(dfBarter, on='Product', how='inner')
     dfB['Rev$ Variance'] = dfB['Rev$_y'] - dfB['Rev$_x']
-    #dfB['TPV$ Variance'] = dfB['TPV$_y'] - dfB['TPV$_x']
+    # dfB['TPV$ Variance'] = dfB['TPV$_y'] - dfB['TPV$_x']
     dfB['Rev$ Variance %'] = np.where(dfB['Rev$ Variance'] < 0, dfB['Rev$ Variance']*100/dfB[dfB['Rev$ Variance'] < 0]
                                       ['Rev$ Variance'].sum(), dfB['Rev$ Variance']*100/dfB[dfB['Rev$ Variance'] > 0]['Rev$ Variance'].sum())
-    #dfB['TPV$ Variance %'] = np.where(dfB['TPV$ Variance'] < 0,dfB['TPV$ Variance']*100/dfB[dfB['TPV$ Variance'] < 0]['TPV$ Variance'].sum(),dfB['TPV$ Variance']*100/dfB[dfB['TPV$ Variance'] > 0]['TPV$ Variance'].sum())
+    # dfB['TPV$ Variance %'] = np.where(dfB['TPV$ Variance'] < 0,dfB['TPV$ Variance']*100/dfB[dfB['TPV$ Variance'] < 0]['TPV$ Variance'].sum(),dfB['TPV$ Variance']*100/dfB[dfB['TPV$ Variance'] > 0]['TPV$ Variance'].sum())
     dfB.rename(columns={'Rev$_x': f'{lastweek} Revenue', 'TPV$_x': f'{lastweek} TPV', 'TPC_x': f'{lastweek} TPC',
                         'Rev$_y': f'{thisweek} Revenue', 'TPV$_y': f'{thisweek} TPV', 'TPC_y': f'{thisweek} TPC'}, inplace=True)
 
@@ -640,13 +640,13 @@ def pos_agency(conn, lastweekyear, thisweek, lastweek, year):
     dfagency = psql.read_sql('''
                 SELECT week,
                 year,
-                SUM("fees") Fees, 
+                SUM("fees") Fees,
                 SUM("rev$") Rev$,
                 SUM("tpv$") TPV$,
                 SUM("tpv")  TPV,
                 SUM("tpc") TPC
                 FROM datatable
-                WHERE year IN %(s3)s AND   
+                WHERE year IN %(s3)s AND
                 product != 'FX' AND
                 vertical IN ('Agency','POS')
                 GROUP BY 1,2
@@ -680,7 +680,7 @@ def currency_performance(conn, lastweekyear, thisweek, lastweek, year):
                 SELECT currency,
                 SUM("fees") Fees
                 FROM datatable
-                WHERE year = %(s3)s AND  
+                WHERE year = %(s3)s AND
                 week = %(s4)s AND
                 currency IN %(s5)s
                 GROUP BY 1
@@ -692,8 +692,8 @@ def currency_performance(conn, lastweekyear, thisweek, lastweek, year):
                 SELECT currency,
                 SUM("fees") Fees
                 FROM datatable
-                WHERE year = %(s3)s AND  
-                week = %(s4)s AND 
+                WHERE year = %(s3)s AND
+                week = %(s4)s AND
                 currency IN %(s5)s
                 GROUP BY 1
                 ORDER BY 2
@@ -705,7 +705,7 @@ def currency_performance(conn, lastweekyear, thisweek, lastweek, year):
                 week,
                 SUM("rev$") Rev$
                 FROM datatable
-                WHERE year = %(s3)s AND  
+                WHERE year = %(s3)s AND
                 currency IN %(s5)s
                 GROUP BY 1,2
                 ORDER BY 3
@@ -739,8 +739,8 @@ def currency_note(conn, year, lastweekyear, thisweek, lastweek, currency_selecte
                 merchname2,
                 SUM("rev$") AS Rev$
                 FROM datatable
-                WHERE year IN %(s3)s AND  
-                week IN %(s4)s AND 
+                WHERE year IN %(s3)s AND
+                week IN %(s4)s AND
                 currency IN %(s5)s
                 GROUP BY 1,2,3,4,5
                 ORDER BY 6
@@ -759,7 +759,7 @@ def cohort_analysis(conn, dfweek, year, lastweekyear, thisweek, lastweek):
                        SELECT REPLACE(merchname2,'Critical Ideas, Inc.','Chipper Cash App') AS merchname2,
                        SUM("rev$") Rev$
                        FROM datatable
-                       WHERE year = %(s1)s AND 
+                       WHERE year = %(s1)s AND
                        week = %(s2)s AND
                        merchname2 NOT IN ('Barter', 'RAVE-PAYOUT') AND
                        merchname2 IS NOT NULL
@@ -772,9 +772,9 @@ def cohort_analysis(conn, dfweek, year, lastweekyear, thisweek, lastweek):
                        SELECT REPLACE(merchname2,'Critical Ideas, Inc.','Chipper Cash App') AS merchname2,
                        SUM("rev$") Rev$
                        FROM datatable
-                       WHERE year = %(s1)s AND 
+                       WHERE year = %(s1)s AND
                        week = %(s2)s AND
-                       merchname2 NOT IN ('Barter', 'RAVE-PAYOUT') AND 
+                       merchname2 NOT IN ('Barter', 'RAVE-PAYOUT') AND
                        merchname2 IS NOT NULL
                        GROUP BY 1
                        ORDER BY 2 DESC
@@ -808,9 +808,9 @@ def weekly_new_old_merch(conn, merlist, year):
                        SUM("rev$") AS Rev$
                        FROM datatable
                        WHERE year = %(s1)s AND
-                       merchname2 IN %(s2)s 
+                       merchname2 IN %(s2)s
                        GROUP BY 1,2
-                       
+
                        ''',
                            conn, params={'s1': year, 's2': tuple(merlist)})
 
@@ -849,11 +849,11 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 quarter,
                 COALESCE(SUM("rev$"),0) rev$
                 FROM datatable
-                WHERE year = %(s2)s AND 
-                classification IN %(s3)s AND 
-                category IN %(s4)s AND 
+                WHERE year = %(s2)s AND
+                classification IN %(s3)s AND
+                category IN %(s4)s AND
                 month IN %(s5)s AND
-                quarter IN %(s6)s 
+                quarter IN %(s6)s
                 GROUP BY 1,2,3,4,5,6,7
                 ORDER BY 8 DESC
                 '''
@@ -875,12 +875,12 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 quarter,
                 COALESCE(SUM("rev$"),0) rev$
                 FROM datatable
-                WHERE year = %(s2)s AND 
-                classification IN %(s3)s AND 
-                category IN %(s4)s AND 
+                WHERE year = %(s2)s AND
+                classification IN %(s3)s AND
+                category IN %(s4)s AND
                 month IN %(s5)s AND
                 quarter IN %(s6)s AND
-                merchname2 IN %(s7)s 
+                merchname2 IN %(s7)s
                 GROUP BY 1,2,3,4,5,6,7
                 ORDER BY 8 DESC
                 '''
@@ -904,9 +904,9 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 quarter,
                 COALESCE(SUM("rev$"),0) rev$
                 FROM datatable
-                WHERE year = %(s2)s AND 
-                classification IN %(s3)s AND 
-                category IN %(s4)s AND 
+                WHERE year = %(s2)s AND
+                classification IN %(s3)s AND
+                category IN %(s4)s AND
                 month IN %(s5)s AND
                 quarter IN %(s6)s AND
                 vertical IN %(s7)s
@@ -931,12 +931,12 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 quarter,
                 COALESCE(SUM("rev$"),0) rev$
                 FROM datatable
-                WHERE year = %(s2)s AND 
-                classification IN %(s3)s AND 
-                category IN %(s4)s AND 
+                WHERE year = %(s2)s AND
+                classification IN %(s3)s AND
+                category IN %(s4)s AND
                 month IN %(s5)s AND
                 quarter IN %(s6)s AND
-                merchname2 IN %(s7)s AND 
+                merchname2 IN %(s7)s AND
                 vertical IN %(s8)s
                 GROUP BY 1,2,3,4,5,6,7
                 ORDER BY 8 DESC
@@ -1010,7 +1010,7 @@ def process_pipeline(dfpip, team_name):
     numoflive = dfpip[dfpip.STAGE == 'Live']['PROSPECT'].nunique()
     expfromlive = dfpip[dfpip.STAGE ==
                         'Live']['PROJECTED ANNUAL REVENUE ($)'].sum()
-    #livetarach = round(expfromlive*100/totexprev)
+    # livetarach = round(expfromlive*100/totexprev)
     dfpros = dfpip.groupby(['PROSPECT'])[['ESTIMATED MONTHLY REVS ($)',
                                           'PROJECTED ANNUAL REVENUE ($)', 'ESTIMATED WEEKLY REVENUE ($)']].sum().reset_index()
     dfpros = dfpros.sort_values(
@@ -1032,18 +1032,40 @@ def process_pipeline(dfpip, team_name):
 
 # Account Management Report Functions
 
-def gainers_losers(conn, year, thismonth, team_name):
-    dfmain = psql.read_sql('''
-                       SELECT merchname2,
-                       year,
-                       month,
-                       vertical,
-                       COALESCE(SUM("rev$"),0) rev$
-                       FROM datatable
-                       GROUP BY 1,2,3,4
-                       ORDER BY 5 DESC
-                       ''',
-                           conn)
+def gainers_losers(conn, year, lastweekyear, thismonth, team_name):
+    if thismonth < 6:
+        dfmain = psql.read_sql('''
+                        SELECT merchname2,
+                        year,
+                        month,
+                        vertical,
+                        COALESCE(SUM("rev$"),0) rev$
+                        FROM datatable
+                        WHERE year IN %(s2)s AND 
+                        vertical IN %(s3)s
+                        GROUP BY 1,2,3,4
+                        ORDER BY 5 DESC
+                        ''',
+                               conn, params={'s2': tuple(
+                                   [lastweekyear, year]), 's3': tuple(['Ent & NFIs'])}
+                               )
+
+    else:
+        dfmain = psql.read_sql('''
+                        SELECT merchname2,
+                        year,
+                        month,
+                        vertical,
+                        COALESCE(SUM("rev$"),0) rev$
+                        FROM datatable
+                        WHERE year IN %(s2)s AND 
+                        vertical IN %(s3)s
+                        GROUP BY 1,2,3,4
+                        ORDER BY 5 DESC
+                        ''',
+                               conn, params={'s2': tuple(
+                                   [year]), 's3': tuple(['Ent & NFIs'])}
+                               )
     dfmain.columns = ['MerchName2', 'Year', 'Month', 'Vertical', 'Rev$']
     if 'All' in team_name:
         dfxx = pd.pivot_table(dfmain,
@@ -1092,3 +1114,48 @@ def gainers_losers(conn, year, thismonth, team_name):
     dfxxloss = dfxx[dfxx['Variance'] < 0].sort_values(
         'Variance', ascending=True).reset_index(drop=True)
     return dfxxgain, dfxxloss
+
+
+def accmer_monthrev(conn, year, team_name, accmer_selected):
+    if 'All' in accmer_selected:
+        dfaccmerraw = psql.read_sql('''
+                            SELECT merchname2,
+                            month,
+                            COALESCE(SUM("rev$"),0) rev$
+                            FROM datatable
+                            WHERE year IN %(s2)s
+                            AND vertical IN %(s3)s
+                            GROUP BY 1,2
+                            ORDER BY 3 DESC
+                            ''',
+                                    conn, params={'s2': tuple(
+                                        [year]), 's3': tuple(team_name)}
+                                    )
+    else:
+        dfaccmerraw = psql.read_sql('''
+                            SELECT merchname2,
+                            month,
+                            COALESCE(SUM("rev$"),0) rev$
+                            FROM datatable
+                            WHERE year IN %(s2)s AND
+                            merchname2 IN %(s4)s AND
+                            vertical IN  %(s3)s
+                            GROUP BY 1,2
+                            ORDER BY 3 DESC
+                            ''',
+                                    conn, params={'s2': tuple(
+                                        [year]), 's3': tuple(team_name), 's4': tuple(accmer_selected)}
+                                    )
+    dfaccmerraw.columns = ['MerchName2', 'Month', 'Rev$']
+    dfaccmer = pd.pivot_table(dfaccmerraw,
+                              index='MerchName2',
+                              values='Rev$',
+                              columns=['Month'],
+                              fill_value=0,
+                              aggfunc=np.sum,
+                              )
+    dfaccmer = dfaccmer.reset_index()
+    dfaccmer.sort_values(dfaccmer.columns.tolist()
+                         [-1], ascending=False, inplace=True)
+    dfaccmer = dfaccmer.reset_index(drop=True)
+    return dfaccmer

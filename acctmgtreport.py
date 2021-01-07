@@ -1,20 +1,20 @@
 import streamlit as st
-from utils import gainers_losers
+from utils import gainers_losers, accmer_monthrev
 from graphs import table_fig
 from db import view_notes, edit_notes
+import pandas.io.sql as psql
 
 
-def acct_mgt_report(c, conn, result, today1, thismonth, year, all_team):
+def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear, all_team):
 
     st.subheader(
-        f'{result[0][2]} Account Management - Welcome {result[0][1].title().split("@")[0]}')
+        f'Account Management - Welcome {result[0][1].title().split("@")[0]}')
     st.markdown("---")
 
-    team_name = st.multiselect(
-        'Select Vertical', all_team, ['All'], key='acctmgt')
+    team_name = ['Ent & NFIs']
 
     dfxxgain, dfxxloss = gainers_losers(conn,
-                                        year, thismonth, team_name)
+                                        year, lastweekyear, thismonth, team_name)
 
     st.markdown('---')
     st.subheader('Gainers')
@@ -51,3 +51,13 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, all_team):
 
     lossfig = table_fig(dfxxloss, wide=1350)
     st.plotly_chart(lossfig)
+
+    all_accmer = ['All'] + \
+        psql.read_sql('''SELECT DISTINCT merchname2 FROM datatable WHERE vertical IN %(s3)s ''',
+                      conn, params={'s3': tuple(['Ent & NFIs'])}).merchname2.tolist()
+    accmer_selected = st.multiselect('Select Merchants', all_accmer, ['All'])
+    st.markdown("---")
+    st.subheader('Monthly Revenue By Merchants')
+    dfaccmer = accmer_monthrev(conn, year, ['Ent & NFIs'], accmer_selected)
+    dfaccmerfig = table_fig(dfaccmer, wide=1350)
+    st.plotly_chart(dfaccmerfig)

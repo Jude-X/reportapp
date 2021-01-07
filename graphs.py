@@ -202,7 +202,7 @@ def vertical_budget_graphs(dfteamrev_prod, dfteamrev_month):
                text=dfteamrev_prod.iloc[:, 1].values.tolist(), textfont_color="white", texttemplate='%{text:.2s}', textposition='inside')
     ])
     verticalprorevfig.update_layout(title='Revenue By Product', xaxis=dict(title='Revenue ($)'),
-                                    autosize=True, width=1150, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                                    autosize=True, width=650, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
     verticalprorevfig.update_yaxes(type='category')
     verticalprorevfig.update_xaxes(gridcolor='#C0C0C0')
@@ -240,7 +240,7 @@ def pipeline_tracker_graphs(numoflive, dfstage, livetarget=250):
 
     stagefig.update_layout({'title': 'Prospective Merchants by Stage', "xaxis": {"title": "Stages", 'zeroline': False},
                             "yaxis": {'zeroline': False, 'showline': False, 'visible': False},
-                            "autosize": True, "width": 1150, "paper_bgcolor": 'rgba(0,0,0,0)', "plot_bgcolor": 'rgba(0,0,0,0)',
+                            "autosize": True, "height": 400, "width": 1350, "paper_bgcolor": 'rgba(0,0,0,0)', "plot_bgcolor": 'rgba(0,0,0,0)',
                             "barmode": "stack", "legend": {"orientation": "h", "y": -0.18}})
 
     return livefig, stagefig
@@ -259,11 +259,12 @@ def table_fig(df, wide=1000, long=500, title=''):
         noofcols = wide
     else:
         noofcols = int(df.shape[1]-1)
-    width = wide//noofcols
     if len(df.columns) < 3:
+        width = wide//noofcols
         cw = [2*width/3, 1*width/3]
     else:
-        cw = [width, width, width, width]
+        width = wide//(noofcols-1)
+        cw = [2*width, width, width, width]
     colstofor = df.columns.tolist()[1:]
     if 'Variance' in df.columns.tolist():
         df['Variance'] = pd.to_numeric(
@@ -356,7 +357,7 @@ def card_indicators2(value=10, ref=5, title='', rel=False, color=1):
 
 def bar_indicator(value=10, ref=5, title=''):
     fig = go.Figure(go.Indicator(
-        mode="gauge+number+delta",
+        mode="gauge+number",
         value=value,
         delta={'reference': ref, 'relative': True},
         title={'text': title},

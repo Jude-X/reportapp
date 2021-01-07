@@ -195,7 +195,7 @@ def view_notes(c, today1, nameofnote):
 
 
 def create_vertargetable(c):
-    c.execute('CREATE TABLE IF NOT EXISTS vertargetable(id SERIAL PRIMARY KEY, vertical VARCHAR(55) UNIQUE, year_target INTEGER)')
+    c.execute('CREATE TABLE IF NOT EXISTS vertargetable(id SERIAL PRIMARY KEY, vertical VARCHAR(55) UNIQUE, month_target INTEGER, year_target INTEGER)')
 
 
 def create_livetargetable(c):
@@ -214,13 +214,28 @@ def get_livetarget(c, team_name):
     return data
 
 
-def edit_vertargetable(c, team_name, yeartarget2):
-    try:
-        c.execute('INSERT INTO vertargetable(vertical,year_target) VALUES (%s,%s)',
-                  (team_name[0], yeartarget2))
-    except Exception:
-        c.execute('UPDATE vertargetable SET year_target = %s WHERE vertical = %s',
-                  (yeartarget2, team_name[0]))
+def edit_vertargetable(c, team_name, monthtarget2=None, yeartarget2=None):
+    if monthtarget2 != 0 and yeartarget2 != 0:
+        try:
+            c.execute('INSERT INTO vertargetable(vertical,month_target,year_target) VALUES (%s,%s,%s)',
+                      (team_name[0], monthtarget2, yeartarget2))
+        except Exception:
+            c.execute('UPDATE vertargetable SET month_target = %s, year_target = %s WHERE vertical = %s',
+                      (monthtarget2, yeartarget2, team_name[0]))
+    elif monthtarget2 != 0 and yeartarget2 == 0:
+        try:
+            c.execute('INSERT INTO vertargetable(vertical,month_target) VALUES (%s,%s)',
+                      (team_name[0], monthtarget2))
+        except Exception:
+            c.execute('UPDATE vertargetable SET month_target = %s WHERE vertical = %s',
+                      (monthtarget2, team_name[0]))
+    elif not monthtarget2 == 0 and yeartarget2 != 0:
+        try:
+            c.execute('INSERT INTO vertargetable(vertical,year_target) VALUES (%s,%s)',
+                      (team_name[0], yeartarget2))
+        except Exception:
+            c.execute('UPDATE vertargetable SET year_target = %s WHERE vertical = %s',
+                      (yeartarget2, team_name[0]))
 
 
 def edit_livetargetable(c, team_name, livetarget2):

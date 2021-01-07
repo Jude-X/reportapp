@@ -25,7 +25,7 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
                           monthtarget1, yeartarget1)
 
     col11aa, col11bb, col11cc, col11dd = st.beta_columns(4)
-    col1a, col3a, col2a = st.beta_columns([2, 1, 3])
+    col1a, col3a, col2a, col4a = st.beta_columns([2, 1, 3, 0.5])
     col11aa.plotly_chart(card_indicators(
         value=mtdsumthis, ref=monthtarget, title=f'{month[0:3]} MTD', color=2))
     col11bb.plotly_chart(card_indicators(
@@ -48,14 +48,14 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
         dfsum, 'Product Performance Table'), unsafe_allow_html=True)
 
     st.markdown('---')
-    col1aa, col3aa, col2aa = st.beta_columns(
-        [3, 1, 3])
+    col1ab, col3ab, col2ab, col4ab = st.beta_columns(
+        [3.5, 0.5, 3.0, 0.5])
 
     mtdfig, ytdfig = daily_report_graphs(
         month, runrate, monthtarget, mtdsumthis, year, fyrunrate, yeartarget, ytdsum)
-    col1aa.plotly_chart(mtdfig)
+    col1ab.plotly_chart(mtdfig)
 
-    col3aa.plotly_chart(ytdfig)
+    col3ab.plotly_chart(ytdfig)
 
     col1xx, col3yy, col2yy, col4yy = st.beta_columns(
         [3.5, 0.5, 2.5, 0.5])
