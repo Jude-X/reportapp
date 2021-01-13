@@ -167,7 +167,7 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
                             month,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s
+                            WHERE month = %(s2)s AND year = %(s3)s AND day <= %(s1)s
                             GROUP BY 1, 2),
 
                             t2 AS (
@@ -250,10 +250,12 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
     dfsumrun.columns = dfsumrunlast.columns = ['Day', 'Rev$']
     dfmtd = dfmtd.pivot_table(
         index=['Product'], columns='Month', values='Rev$').reset_index()
-    dfmtd['Variance'] = (dfmtd.iloc[:, -1] -
-                         dfmtd.iloc[:, -2])/dfmtd.iloc[:, -2]
-    dfmtd.columns = ['Product', f'{lastmonth[0:3]} MTD',
-                     f'{today1.strftime("%B")[0:3]} MTD', 'Variance']
+    dfmtd['Variance'] = (dfmtd.iloc[:, -2] -
+                         dfmtd.iloc[:, -1])/dfmtd.iloc[:, -1]
+    dfmtd.columns = [
+        'Product', f'{today1.strftime("%B")[0:3]} MTD', f'{lastmonth[0:3]} MTD', 'Variance']
+    dfmtd = dfmtd[['Product', f'{lastmonth[0:3]} MTD',
+                   f'{today1.strftime("%B")[0:3]} MTD', 'Variance']]
     mtdsumthis = round(dfmtd[f'{today1.strftime("%B")[0:3]} MTD'].sum(), 2)
     mtdsumlast = round(dfmtd[f'{lastmonth[0:3]} MTD'].sum(), 2)
     dfsumrun['Avg1'] = dfsumrun['Rev$'].rolling(window=4).mean()
@@ -290,9 +292,9 @@ def ytd(conn, today1, daysleft, team_name=None):
                                    conn, params={'s3': sqlthismonthyear, 's6': tuple(team_name)})
     dfyrsumrun.columns = ['Date', 'Rev$']
     ytdsum = round(dfyrsumrun['Rev$'].sum(), 2)
-    dfyrsumrun['Avg1'] = dfyrsumrun['Rev$'].rolling(window=4).mean()
+    dfyrsumrun['Avg1'] = dfyrsumrun['Rev$'].rolling(window=10).mean()
     dfyrsumrun = dfyrsumrun.assign(Avg1=np.where(
-        dfyrsumrun.shape[0] < 4, dfyrsumrun['Rev$'].mean(), dfyrsumrun.Avg1))
+        dfyrsumrun.shape[0] < 10, dfyrsumrun['Rev$'].mean(), dfyrsumrun.Avg1))
     fyrunrate = round((dfyrsumrun['Avg1'].mean()*daysleft)+ytdsum, 2)
     return ytdsum, fyrunrate
 
@@ -406,7 +408,7 @@ def week_summary(conn, today1, year, lastweekyear, thisweek, lastweek, thismonth
                     WHERE year = %(s3)s AND week = %(s4)s
                     GROUP BY 1
                         ''',
-                                 conn, params={'s3': year, 's4': thisweek})
+                                 conn, params={'s3': year-1, 's4': thisweek})
 
     dflastweek = psql.read_sql('''
                     SELECT product,
@@ -610,7 +612,7 @@ def week_barter_performance(conn, lastweekyear, year, thisweek, lastweek, dfweek
                         subproduct IN ('Airtime','Bills','Barter Send Money to Bank', 'Card Transactions','Mvisa Qr Payment', 'Card Issuance Fee', 'Pay with Barter', 'Send Money', 'Wallet Funding')
                         GROUP BY 1
                         ''',
-                                 conn, params={'s1': year, 's2': lastweek})
+                                 conn, params={'s1': lastweekyear, 's2': lastweek})
 
     dfweekrevBar.columns = ['Week', 'Rev$']
     dfweektpvBar.columns = ['Product', 'Week', 'TPV$']
@@ -1045,13 +1047,13 @@ def gainers_losers(conn, year, lastweekyear, thismonth, team_name):
                         vertical,
                         COALESCE(SUM("rev$"),0) rev$
                         FROM datatable
-                        WHERE year IN %(s2)s AND 
+                        WHERE year IN %(s2)s AND
                         vertical IN %(s3)s
                         GROUP BY 1,2,3,4
                         ORDER BY 5 DESC
                         ''',
                                conn, params={'s2': tuple(
-                                   [lastweekyear, year]), 's3': tuple(['Ent & NFIs'])}
+                                   [year-1, year]), 's3': tuple(['Ent & NFIs'])}
                                )
 
     else:
@@ -1062,7 +1064,7 @@ def gainers_losers(conn, year, lastweekyear, thismonth, team_name):
                         vertical,
                         COALESCE(SUM("rev$"),0) rev$
                         FROM datatable
-                        WHERE year IN %(s2)s AND 
+                        WHERE year IN %(s2)s AND
                         vertical IN %(s3)s
                         GROUP BY 1,2,3,4
                         ORDER BY 5 DESC
@@ -1092,7 +1094,7 @@ def gainers_losers(conn, year, lastweekyear, thismonth, team_name):
     j = 3
     for i in range(0, len(dfxx.columns)+1, 4):
         try:
-            dfxx.insert(j+1, f'{year} Quarter {(j+1)//4} Total',
+            dfxx.insert(j+1, f'{dfxx.columns[i-1][0]} Quarter {(j+1)//4} Total',
                         dfxx.iloc[:, i+1:j+1].sum(axis=1))
             j += 4
         except:
@@ -1103,11 +1105,15 @@ def gainers_losers(conn, year, lastweekyear, thismonth, team_name):
         dfxx = dfxx[col2dis]
     except:
         pass
+
     for i in range(len(dfxx.columns)):
-        if len(dfxx.columns[-i][0]) > 15:
-            colname = dfxx.columns[-i][0]
-            colname2 = dfxx.columns[-i-4][0]
-            break
+        try:
+            if len(dfxx.columns[-i][0]) > 15:
+                colname = dfxx.columns[-i][0]
+                colname2 = dfxx.columns[-i-4][0]
+                break
+        except TypeError:
+            pass
     try:
         dfxx['Variance'] = dfxx[colname] - dfxx[colname2]
     except:
@@ -1155,3 +1161,198 @@ def accmer_monthrev(conn, year, team_name, accmer_selected):
         ['Rev$']].sum().reset_index()
 
     return dfaccmer
+
+
+# SME Report Functions
+
+# Bands Graph
+def sme_store(conn, thisweek, lastweek, year, lastweekyear):
+    dfssband = psql.read_sql('''
+                        SELECT Band,
+                        COALESCE(SUM("rev$"),0) AS rev$,
+                        COALESCE(SUM("tpv$"),0) AS tpv$,
+                        COUNT(DISTINCT "accountid")
+                        FROM storetxn
+                        WHERE year = %(s2)s AND
+                        week = %(s3)s
+                        GROUP BY 1
+                        ORDER BY 3 DESC
+                        ''',
+                             conn, params={'s2': year, 's3': thisweek}
+                             )
+    dfssband.columns = ['Band', 'Rev$', 'TPV$', 'Accountid']
+
+    # Top 10 Nigerian Stores
+    dfnigstore = psql.read_sql('''
+                        SELECT StoreName,
+                        COALESCE(SUM("rev$"),0) AS rev$
+                        FROM storetxn
+                        WHERE year = %(s2)s AND
+                        week = %(s3)s AND
+                        country = 'NG'
+                        GROUP BY 1
+                        ORDER BY 2 DESC
+                        ''',
+                               conn, params={'s2': year, 's3': thisweek}
+                               )
+    dfnigstore.columns = ['Store Name', 'Rev$']
+    dfnigstore = dfnigstore.sort_values(
+        'Rev$', ascending=False).reset_index(drop=True)
+
+    dfnonigstore = psql.read_sql('''
+                        SELECT storename,
+                        COALESCE(SUM("rev$"),0) rev$,
+                        country
+                        FROM storetxn
+                        WHERE year = %(s2)s AND
+                        week = %(s3)s AND
+                        country != 'NG'
+                        GROUP BY 1,3
+                        ORDER BY 2 DESC
+                        ''',
+                                 conn, params={'s2': year, 's3': thisweek}
+                                 )
+    dfnonigstore.columns = ['Store Name', 'Rev$', 'Country']
+    dfnonigstore = dfnonigstore.sort_values(
+        'Rev$', ascending=False).reset_index(drop=True)
+
+    dfwksignupcou = psql.read_sql('''
+                        SELECT week,
+                        country,
+                        COUNT(DISTINCT "merchantid")
+                        FROM ravestore
+                        WHERE year = %(s2)s AND
+                        country IN  %(s3)s
+                        GROUP BY 1,2
+                        ORDER BY 3 DESC
+                        ''',
+                                  conn, params={'s2': year, 's3': tuple(
+                                      ['GH', 'KE', 'NG', 'ZA', 'UG', 'US', 'ZM', 'GB'])}
+                                  )
+    dfwksignupcou.columns = ['Week', 'Country', 'Merchantid']
+
+    dfwksignupcou = pd.pivot_table(dfwksignupcou, index=[
+                                   'Country'], values='Merchantid', columns='Week', aggfunc='sum')
+
+    mertrxndf = psql.read_sql('''
+                        SELECT week,
+                        COALESCE(SUM("rev$"),0) rev$,
+                        COALESCE(SUM("tpv$"),0) tpv$,
+                        COUNT("currency"),
+                        COUNT(DISTINCT "accountid")
+                        FROM storetxn
+                        WHERE year = %(s2)s
+                        GROUP BY 1
+                        ORDER BY 3 DESC
+                        ''',
+                              conn, params={'s2': year}
+                              )
+    mertrxndf.columns = ['Week', 'Rev$', 'TPV$', 'Currency', 'Accountid']
+
+    dfsswk = mertrxndf[['Week', 'Rev$', 'Accountid']]
+
+    newmerdf = psql.read_sql('''
+                        SELECT week,
+                        COUNT(DISTINCT "merchantid")
+                        FROM ravestore
+                        WHERE year = %(s2)s
+                        GROUP BY 1
+                        ORDER BY 2 DESC
+                        ''',
+                             conn, params={'s2': year}
+                             )
+    newmerdf.columns = ['Week', 'Merchantid']
+
+    newid = newmerdf[newmerdf.Week ==
+                     thisweek]['Merchantid'].value_counts().index.tolist()
+    thisweekid = mertrxndf[mertrxndf.Week ==
+                           thisweek]['Accountid'].value_counts().index.tolist()
+    dict1 = {}
+    for id1 in thisweekid:
+        if id1 in newid:
+            try:
+                dict1[id1] = 1
+            except Exception:
+                dict1[id1] += 1
+    newmertxn = len(dict1)
+
+    newmer = newmerdf[newmerdf.Week == thisweek]['Merchantid'].item()
+    merRev = mertrxndf[mertrxndf.Week == thisweek]['Rev$'].item()
+    merTPV = mertrxndf[mertrxndf.Week == thisweek]['TPV$'].item()
+    merTPC = mertrxndf[mertrxndf.Week == thisweek]['Currency'].item()
+    merTxn = mertrxndf[mertrxndf.Week == thisweek]['Accountid'].item()
+
+    try:
+        newmerL = newmerdf[newmerdf.Week == lastweek]['Merchantid'].item()
+        merRevL = mertrxndf[mertrxndf.Week == lastweek]['Rev$'].item()
+        merTPVL = mertrxndf[mertrxndf.Week == lastweek]['TPV$'].item()
+        merTPCL = mertrxndf[mertrxndf.Week == lastweek]['Currency'].item()
+        merTxnL = mertrxndf[mertrxndf.Week == lastweek]['Accountid'].item()
+    except:
+        newmerL = 0
+        merRevL = 1
+        merTPVL = 1
+        merTPCL = 1
+        merTxnL = 1
+
+    merStat = [newmer, newmerL, newmertxn, merTxn, merTxnL, merRev, merRevL,
+               merTPV, merTPVL, merTPC, merTPCL, merTPV/merTxn, merTPC/merTxn]
+
+    return dfssband, dfsswk, dfnigstore, dfnonigstore, dfwksignupcou, merStat
+
+
+def sme_reclassification(conn, c, year, ver, cat, subpro):
+
+    entmer = psql.read_sql('''
+                        WITH t1 AS(
+                        SELECT Merchants,
+                        Month,
+                        COALESCE(SUM("rev$"),0) AS rev
+                        FROM datatable
+                        WHERE year = %(s2)s AND
+                        vertical NOT IN %(s3)s AND
+                        category IN %(s4)s AND
+                        SubProduct NOT IN %(s5)s 
+                        GROUP BY 1,2
+                        ORDER BY 3 DESC)
+
+                        SELECT t1.merchants AS merchants
+                        FROM t1
+                        WHERE t1.rev > 3999
+                        ''',
+                           conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
+                               cat), 's5': tuple(subpro)}).merchants.tolist()
+    return entmer
+
+
+def update_entrpsemer(c, entmer):
+    if entmer:
+        for entmeritem in entmer:
+            try:
+                c.execute(
+                    '''INSERT INTO entrpsemertable(merchants) VALUES(%s)''', ([entmeritem]))
+            except:
+                pass
+
+
+def sme_country_weekrev(conn, year, ver, mer, cat, subpro, cou):
+
+    dfsmecou = psql.read_sql('''
+                        SELECT week,
+                        COALESCE(SUM("rev$"),0) rev$,
+                        COUNT(DISTINCT "merchants")
+                        FROM datatable
+                        WHERE year = %(s2)s AND
+                        vertical NOT IN %(s3)s AND
+                        merchants NOT IN  %(s4)s AND
+                        category IN %(s5)s AND
+                        SubProduct NOT IN %(s6)s AND
+                        Country = %(s7)s
+                        GROUP BY 1
+                        ORDER BY 2 DESC
+                        ''',
+                             conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
+                                 mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': cou}
+                             )
+    dfsmecou.columns = ['Week', 'Rev$', 'Merchants']
+    return dfsmecou

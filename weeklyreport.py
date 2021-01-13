@@ -13,6 +13,7 @@ def weekly_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr,
     st.subheader(f'Week {thisweek} Summary')
     st.markdown('---')
     try:
+
         df1, df2, df3, dfweek, dfweeklastyr, dflastweek, dfweeksum, weekStat, dfweeklyrev, dfweeksum, weekStat2 = week_summary(
             conn, today1, year, lastweekyear, thisweek, lastweek, thismonth, lastmonth, numofdays)
         # dfweeklyrevexFX, weekStatexFX, weekStatexFX2 = week_exfx_summary(

@@ -11,7 +11,7 @@ import numpy as np
 import calendar
 from utils import team_rev, today_dates, yesterday_dates, week_dates, month_dates, year_dates, color_change, pro_color_change, df_sum, mtd, ytd, get_table_download_link, daily_product_notes, week_summary, week_exfx_summary, week_colpay_summary, week_barter_performance, pos_agency, currency_performance, currency_note, weekly_new_old_merch, cohort_analysis, get_pipeline, process_pipeline, projection, gainers_losers
 from graphs import daily_report_graphs, weekly_report_graphs, vertical_budget_graphs, pipeline_tracker_graphs, card_indicators, card_indicators2, table_fig, bar_indicator
-from db import data_table, create_notes, create_usertable, create_bestcase, view_all_targets, login_user, create_targetable, edit_vertargetable, get_vertarget, get_target, create_vertargetable, create_livetargetable, create_weeklynewold_merch,  create_appusertable
+from db import data_table, create_notes, create_usertable, create_bestcase, create_storetxn, view_all_targets, login_user, create_targetable, edit_vertargetable, get_vertarget, get_target, create_vertargetable, create_livetargetable, create_weeklynewold_merch, create_appusertable, create_entrpsemertable, create_ravestore
 from dailyreport import daily_report
 from weeklyreport import weekly_report
 from smereport import sme_report
@@ -40,8 +40,7 @@ st.set_page_config(page_title='Flutterwave Report App', layout='wide')
 
 
 # os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
-result1 = urlparse(
-    os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
+result1 = urlparse('postgres://postgres:flutterwave@localhost:5432/postgres')
 # also in python 3+ use: urlparse("YourUrl") not urlparse.urlparse("YourUrl")
 username = result1.username
 password = result1.password
@@ -59,8 +58,11 @@ conn = psycopg2.connect(
 conn.autocommit = True
 c = conn.cursor()
 
+create_ravestore(c)
 
 data_table(c)
+
+create_entrpsemertable(c)
 
 create_usertable(c)
 
@@ -77,6 +79,8 @@ create_livetargetable(c)
 create_weeklynewold_merch(c)
 
 create_appusertable(c)
+
+create_storetxn(c)
 
 
 st.image(img, width=300)
@@ -156,7 +160,8 @@ elif choice == 'Login':
 
                 elif report == 'SME Report':
 
-                    sme_report(today1)
+                    sme_report(conn, c, today1, thisweek,
+                               lastweek, year, lastweekyear)
 
                 elif report == 'Barter Report':
 
@@ -221,7 +226,8 @@ elif choice == 'Login':
             elif result[0][2] in teams:
                 email == result[0][1].lower()
                 report = st.sidebar.radio('Navigation', reports[5:7])
-                team_name = result[0][2].split()
+                team_name = result[0][2]
+                team_name = [team_name]
 
                 all_mer = ['All'] + \
                     psql.read_sql('''SELECT DISTINCT merchname2 FROM datatable WHERE vertical IN %(s6)s''',
@@ -233,10 +239,15 @@ elif choice == 'Login':
                         with st.beta_expander("Enter Budget"):
                             monthtarget2 = st.number_input(
                                 f"What is {month[0:3]} target", value=0)
+
+                            edit_vertargetable(
+                                c, team_name, monthtarget2=monthtarget2)
+
                             yeartarget2 = st.number_input(
                                 f"What is {year} target", value=0)
+
                             edit_vertargetable(
-                                c, team_name, monthtarget2, yeartarget2)
+                                c, team_name, yeartarget2=yeartarget2)
 
                     try:
                         monthtarget, yeartarget = get_vertarget(c, team_name)[

@@ -23,7 +23,7 @@ def pipeline_report(c, result, all_team=None):
     else:
         st.subheader(
             f'{result[0][2]} Pipeline Tracker - Welcome {result[0][1].title().split("@")[0]}')
-        team_name = result[0][2].split()
+        team_name = [result[0][2]]
 
     st.markdown('---')
     pipeStat, numoflive, dfpros, dfstage = process_pipeline(
@@ -34,6 +34,7 @@ def pipeline_report(c, result, all_team=None):
             livetarget2 = st.number_input(
                 'What is the live number target', value=500)
             edit_livetargetable(c, team_name, livetarget2)
+
     try:
         livetarget = get_livetarget(c, team_name)[2]
     except Exception:

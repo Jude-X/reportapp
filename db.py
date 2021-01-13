@@ -36,6 +36,63 @@ def data_table(c):
     )
     ''')
 
+# \COPY storetxn(AccountID, StoreName, TPV, Fees, Rev$, TPV$, Rate, Day, Date, Week, Month, Quarter, Year, Currency, Country, PaymentType, Band) FROM 'C:\Users\Nzubechukwu Onyekaba\Desktop\project\StoreTrxn.csv' DELIMITER ',' CSV HEADER encoding 'UTF8';
+
+
+def create_storetxn(c):
+    c.execute(
+        '''
+    CREATE TABLE IF NOT EXISTS storetxn(
+	ID BIGSERIAL PRIMARY KEY,
+    AccountID INT DEFAULT NULL,
+    StoreName VARCHAR(300) DEFAULT NULL,
+	TPV DECIMAL(15,2) DEFAULT 0,
+    Fees DECIMAL(15,2) DEFAULT 0,
+    Rev$ DECIMAL(13,2) DEFAULT 0,
+    TPV$ DECIMAL(13,2) DEFAULT 0,
+    Rate DECIMAL(7,5) DEFAULT 0,
+    Day SMALLINT DEFAULT NULL CHECK (Day<=31),
+    Date TIMESTAMP DEFAULT NULL,
+    Week SMALLINT DEFAULT NULL CHECK (Week<=53),
+	Month SMALLINT DEFAULT NULL CHECK (Month<=12),
+	Quarter SMALLINT DEFAULT NULL CHECK (Quarter<=4),
+    Year SMALLINT DEFAULT NULL CHECK (Year>=2016),
+	Currency VARCHAR(4) DEFAULT NULL,
+	Country VARCHAR(3) DEFAULT NULL,
+    PaymentType VARCHAR(50) DEFAULT NULL,
+	Band VARCHAR(10) DEFAULT NULL
+    )
+    ''')
+
+# \COPY ravestore(merchantid,storename,registrationdate,storecreationdate,day,week,month,year,country,category,status) FROM 'C:\Users\Nzubechukwu Onyekaba\Desktop\project\RaveStore.csv' DELIMITER ',' CSV HEADER encoding 'UTF8';
+
+
+def create_ravestore(c):
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS ravestore(
+	ID BIGSERIAL PRIMARY KEY,
+    MerchantID INT DEFAULT NULL,
+    StoreName VARCHAR(300) DEFAULT NULL,
+    RegistrationDate TIMESTAMP DEFAULT NULL,
+    StorecreationDate TIMESTAMP DEFAULT NULL,
+    Day SMALLINT DEFAULT NULL CHECK (Day<=31),
+    Week SMALLINT DEFAULT NULL CHECK (Week<=53),
+	Month SMALLINT DEFAULT NULL CHECK (Month<=12),
+	Quarter SMALLINT DEFAULT NULL CHECK (Quarter<=4),
+    Year SMALLINT DEFAULT NULL CHECK (Year>=2016),
+	Country VARCHAR(3) DEFAULT NULL,
+    Category VARCHAR(100) DEFAULT NULL,
+	Status VARCHAR(20) DEFAULT NULL
+    )
+    '''
+
+              )
+
+
+def create_entrpsemertable(c):
+    c.execute(
+        'CREATE TABLE IF NOT EXISTS entrpsemertable(id SERIAL PRIMARY KEY, merchants VARCHAR(250) UNIQUE)')
+
 
 def create_usertable(c):
     c.execute('CREATE TABLE IF NOT EXISTS userstable(id SERIAL PRIMARY KEY, email VARCHAR(50) UNIQUE, vertical VARCHAR(25), password VARCHAR, admin BOOLEAN DEFAULT FALSE)')
@@ -214,28 +271,15 @@ def get_livetarget(c, team_name):
     return data
 
 
-def edit_vertargetable(c, team_name, monthtarget2=None, yeartarget2=None):
-    if monthtarget2 != 0 and yeartarget2 != 0:
-        try:
-            c.execute('INSERT INTO vertargetable(vertical,month_target,year_target) VALUES (%s,%s,%s)',
-                      (team_name[0], monthtarget2, yeartarget2))
-        except Exception:
-            c.execute('UPDATE vertargetable SET month_target = %s, year_target = %s WHERE vertical = %s',
-                      (monthtarget2, yeartarget2, team_name[0]))
-    elif monthtarget2 != 0 and yeartarget2 == 0:
-        try:
-            c.execute('INSERT INTO vertargetable(vertical,month_target) VALUES (%s,%s)',
-                      (team_name[0], monthtarget2))
-        except Exception:
-            c.execute('UPDATE vertargetable SET month_target = %s WHERE vertical = %s',
-                      (monthtarget2, team_name[0]))
-    elif not monthtarget2 == 0 and yeartarget2 != 0:
-        try:
-            c.execute('INSERT INTO vertargetable(vertical,year_target) VALUES (%s,%s)',
-                      (team_name[0], yeartarget2))
-        except Exception:
-            c.execute('UPDATE vertargetable SET year_target = %s WHERE vertical = %s',
-                      (yeartarget2, team_name[0]))
+def edit_vertargetable(c, team_name, monthtarget2=0, yeartarget2=0):
+    if monthtarget2 != 0:
+        c.execute('UPDATE vertargetable SET month_target = %s WHERE vertical = %s',
+                  (monthtarget2, team_name[0]))
+    elif yeartarget2 != 0:
+        c.execute('UPDATE vertargetable SET year_target = %s WHERE vertical = %s',
+                  (yeartarget2, team_name[0]))
+    else:
+        pass
 
 
 def edit_livetargetable(c, team_name, livetarget2):
@@ -357,23 +401,24 @@ def delete_weeklynewold_merch(c, new_old, del_merch_name2):
 
 def create_appusertable(c):
     c.execute(
-        ''' CREATE TABLE IF NOT EXISTS appusertable(id SERIAL PRIMARY KEY, email VARCHAR(50) UNIQUE) ''')
+        ''' CREATE TABLE IF NOT EXISTS appusertable(id SERIAL PRIMARY KEY, email VARCHAR(50) UNIQUE, vertical VARCHAR(50)) ''')
 
 
-def view_all_appusers(conn):
+def view_all_appusers(conn, email):
     dfappusers = psql.read_sql('''
                     SELECT *
                     FROM appusertable
-                    ''', conn)
-    dfappusers.columns = ['ID', 'Email']
+                    WHERE email = %(s1)s
+                    ''', conn, params={'s1': email})
+    dfappusers.columns = ['ID', 'Email', 'Vertical']
     return dfappusers
 
 
-def add_appuser(c, email):
+def add_appuser(c, email, vertical):
     if '@flutterwavego' in email:
         try:
             c.execute(
-                ''' INSERT INTO appusertable(email) VALUES (%s)''', ([email]))
+                ''' INSERT INTO appusertable(email,vertical) VALUES (%s)''', ([email], [vertical]))
         except:
             st.warning('User already permmitted')
     elif 'Enter Email Here..' in email:

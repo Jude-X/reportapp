@@ -24,16 +24,26 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
             update_target(c, lastmonthtarget1,
                           monthtarget1, yeartarget1)
 
-    col11aa, col11bb, col11cc, col11dd = st.beta_columns(4)
-    col1a, col3a, col2a, col4a = st.beta_columns([2, 1, 3, 0.5])
+    col11aa, col11bb, col11cc, col11dd, col11ee, col11ff, col11gg, col11hh = st.beta_columns(
+        8)
+    col1a, col3a, col2a, col4a = st.beta_columns([2.5, 0.5, 2.5, 1])
     col11aa.plotly_chart(card_indicators(
         value=mtdsumthis, ref=monthtarget, title=f'{month[0:3]} MTD', color=2))
     col11bb.plotly_chart(card_indicators(
-        value=runrate, ref=monthtarget, title=f'{month[0:3]} Run Rate', rel=True, color=1))
+        value=monthtarget, ref=monthtarget, title=f'{month[0:3]} Target', color=2))
     col11cc.plotly_chart(card_indicators(
-        value=ytdsum, ref=yeartarget, title=f'{month[0:3]} YTD', color=2))
+        value=runrate, ref=monthtarget, title=f'{month[0:3]} Run Rate', rel=True, color=1))
     col11dd.plotly_chart(card_indicators(
+        value=round(mtdsumthis/monthtarget*100), ref=monthtarget, title=f'{month[0:3]} Target', rel=True, color=2, percent=True))
+
+    col11ee.plotly_chart(card_indicators(
+        value=ytdsum, ref=yeartarget, title=f'{year} YTD', color=2))
+    col11ff.plotly_chart(card_indicators(
+        value=yeartarget, ref=monthtarget, title=f'{year} Budget', color=2))
+    col11gg.plotly_chart(card_indicators(
         value=fyrunrate, ref=yeartarget, title=f'{year} Run Rate', rel=True, color=1))
+    col11hh.plotly_chart(card_indicators(
+        value=round(ytdsum/yeartarget*100), ref=monthtarget, title=f'{year} Target', rel=True, color=1, percent=True))
 
     dfmtdfig = table_fig(
         dfmtd, wide=700, long=450, title='MTD Table')
@@ -42,7 +52,7 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
         dfmtd, 'MTD Table'), unsafe_allow_html=True)
 
     dfsumfig = table_fig(
-        dfsum, long=450, wide=700, title='Product Performance Table')
+        dfsum, long=450, wide=750, title='Product Performance Table')
     col2a.plotly_chart(dfsumfig)
     col2a.markdown(get_table_download_link(
         dfsum, 'Product Performance Table'), unsafe_allow_html=True)
