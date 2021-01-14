@@ -404,12 +404,21 @@ def create_appusertable(c):
         ''' CREATE TABLE IF NOT EXISTS appusertable(id SERIAL PRIMARY KEY, email VARCHAR(50) UNIQUE, vertical VARCHAR(50)) ''')
 
 
-def view_all_appusers(conn, email):
+def view_appusers(conn, email):
     dfappusers = psql.read_sql('''
                     SELECT *
                     FROM appusertable
                     WHERE email = %(s1)s
                     ''', conn, params={'s1': email})
+    dfappusers.columns = ['ID', 'Email', 'Vertical']
+    return dfappusers
+
+
+def view_all_appusers(conn):
+    dfappusers = psql.read_sql('''
+                    SELECT *
+                    FROM appusertable
+                    ''', conn)
     dfappusers.columns = ['ID', 'Email', 'Vertical']
     return dfappusers
 
@@ -421,10 +430,8 @@ def add_appuser(c, email, vertical):
                 ''' INSERT INTO appusertable(email,vertical) VALUES (%s)''', ([email], [vertical]))
         except:
             st.warning('User already permmitted')
-    elif 'Enter Email Here..' in email:
-        pass
     else:
-        st.warning('Invalid Email')
+        pass
 
 
 def delete_appuser(c, del_appuser_email):

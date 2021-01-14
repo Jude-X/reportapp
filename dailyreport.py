@@ -1,7 +1,7 @@
 import pandas as pd
 from utils import get_table_download_link, projection, daily_product_notes
 from graphs import table_fig, card_indicators, daily_report_graphs
-from db import get_bestcase, update_target, update_bestcase, delete_bestcase, edit_notes
+from db import get_bestcase, update_target, update_bestcase, delete_bestcase, edit_notes, view_notes
 import streamlit as st
 import pandas.io.sql as psql
 
@@ -26,7 +26,7 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
 
     col11aa, col11bb, col11cc, col11dd, col11ee, col11ff, col11gg, col11hh = st.beta_columns(
         8)
-    col1a, col3a, col2a, col4a = st.beta_columns([2.5, 0.5, 2.5, 1])
+    col1a, col2a = st.beta_columns([1.5, 2])
     col11aa.plotly_chart(card_indicators(
         value=mtdsumthis, ref=monthtarget, title=f'{month[0:3]} MTD', color=2))
     col11bb.plotly_chart(card_indicators(
@@ -46,7 +46,7 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
         value=round(ytdsum/yeartarget*100), ref=monthtarget, title=f'{year} Target', rel=True, color=1, percent=True))
 
     dfmtdfig = table_fig(
-        dfmtd, wide=700, long=450, title='MTD Table')
+        dfmtd, wide=650, long=400, title='MTD Table')
     col1a.plotly_chart(dfmtdfig)
     col1a.markdown(get_table_download_link(
         dfmtd, 'MTD Table'), unsafe_allow_html=True)
@@ -58,8 +58,8 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
         dfsum, 'Product Performance Table'), unsafe_allow_html=True)
 
     st.markdown('---')
-    col1ab, col3ab, col2ab, col4ab = st.beta_columns(
-        [3.5, 0.5, 3.0, 0.5])
+    col1ab, col3ab, col2ab = st.beta_columns(
+        [3.5, 0.1, 3.0])
 
     mtdfig, ytdfig = daily_report_graphs(
         month, runrate, monthtarget, mtdsumthis, year, fyrunrate, yeartarget, ytdsum)
@@ -68,7 +68,7 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
     col3ab.plotly_chart(ytdfig)
 
     col1xx, col3yy, col2yy, col4yy = st.beta_columns(
-        [3.5, 0.5, 2.5, 0.5])
+        [2, 0.75, 2, 0.75])
 
     with col1xx:
         st.subheader(
