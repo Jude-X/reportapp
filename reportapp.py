@@ -42,7 +42,7 @@ st.set_page_config(page_title='Flutterwave Report App',
 
 
 # os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
-result1 = urlparse('postgres://postgres:flutterwave@localhost:5432/postgres')
+result1 = urlparse(os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
 # also in python 3+ use: urlparse("YourUrl") not urlparse.urlparse("YourUrl")
 username = result1.username
 password = result1.password
