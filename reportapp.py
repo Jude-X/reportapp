@@ -108,7 +108,6 @@ if choice == 'Home':
     st.subheader('Home Page')
     col1, col2 = st.beta_columns([1, 3])
     with col2:
-        @st.cache(allow_output_mutation=True)
         def get_base64_of_bin_file(bin_file):
             with open(bin_file, 'rb') as f:
                 data = f.read()
