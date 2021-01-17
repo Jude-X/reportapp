@@ -399,7 +399,7 @@ def bar_indicator(value=10, ref=5, title=''):
     return fig
 
 
-def clustered_graph(df, lgdbar, lgdline, grphtitle, xtitle, ytitle):
+def clustered_graph(df, lgdbar, lgdline, grphtitle, xtitle, ytitle, width=1150):
     # Create figure with secondary y-axis
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -411,8 +411,8 @@ def clustered_graph(df, lgdbar, lgdline, grphtitle, xtitle, ytitle):
         go.Scatter(name=lgdline, x=df.iloc[:, 0].values.tolist(), y=df.iloc[:, 2].values.tolist(), marker_color='#ff9933'), secondary_y=True)
 
     # Add figure title
-    fig.update_layout({'title': grphtitle, 'legend': {"orientation": "h", "y": 1.15}, "xaxis": {"title": xtitle, "tickmode": 'linear', "dtick": 1},
-                       "autosize": True, "width": 1150, "paper_bgcolor": 'rgba(0,0,0,0)', "plot_bgcolor": 'rgba(0,0,0,0)'})
+    fig.update_layout({'title': grphtitle, 'legend': {"orientation": "h"}, "xaxis": {"title": xtitle, "tickmode": 'linear', "dtick": 1},
+                       "autosize": True, "width": width, "paper_bgcolor": 'rgba(0,0,0,0)', "plot_bgcolor": 'rgba(0,0,0,0)'})
 
     # Set y-axes titles
     fig.update_yaxes(

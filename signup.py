@@ -5,7 +5,7 @@ from PIL import Image
 from db import add_userdata, view_appusers, add_appuser
 
 
-def sign_up(c, conn, teams):
+def sign_up(c, conn):
     st.subheader('Create New Account')
 
     st.markdown('---')
@@ -15,8 +15,10 @@ def sign_up(c, conn, teams):
         col1, col3, col2, col4 = st.beta_columns([0.35, 0.10, 0.65, 0.10])
 
         with col2:
-            img2 = Image.open('signup.jpg')
-            st.image(img2, use_column_width=True, height=400)
+            # https://drive.google.com/file/d/1fYbdp0eQjCovvLex51_uPoUx5ZHadhux/view?usp=sharing
+
+            st.image('https://drive.google.com/uc?id=1fYbdp0eQjCovvLex51_uPoUx5ZHadhux',
+                     use_column_width=True, height=400)
 
         with col1:
             new_email = st.text_input('Email')

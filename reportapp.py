@@ -86,48 +86,23 @@ create_storetxn(c)
 
 
 menu = ['Home', 'Login', 'SignUp']
-reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report',
-           'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report', 'User Profiles']
 
 choice = st.sidebar.selectbox('Menu', menu)
 
-teams = ['Commercial', 'Head AM'] + \
-    psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL''',
-                  conn).vertical.tolist()
-
-# Query to get the list of merchants from the database
-all_mer = ['All'] + \
-    psql.read_sql('SELECT DISTINCT merchname2 FROM datatable',
-                  conn).merchname2.tolist()
-
-# Query to get the list of verticals from the database
-all_team = [
-    'All']+psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL ''', conn).vertical.tolist()
-
 if choice == 'Home':
+    page_bg_img = '''
+                <style>
+                body {
+                background-image: url("https://drive.google.com/uc?id=1eD071S7gdM5mykStXAZDnM_cHqpSTBGU");
+                background-size: cover;
+                }
+                </style>
+                '''
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
     st.subheader('Home Page')
-    col1, col2 = st.beta_columns([1, 3])
-    with col2:
-        def get_base64_of_bin_file(bin_file):
-            with open(bin_file, 'rb') as f:
-                data = f.read()
-            return base64.b64encode(data).decode()
 
-        def set_png_as_page_bg(png_file):
-            bin_str = get_base64_of_bin_file(png_file)
-            page_bg_img = '''
-            <style>
-            body {
-            background-image: url("data:image/png;base64,%s");
-            background-size: cover;
-            }
-            </style>
-            ''' % bin_str
-
-            st.markdown(page_bg_img, unsafe_allow_html=True)
-            return
-
-        set_png_as_page_bg('homepage.gif')
+# https://drive.google.com/file/d/1eD071S7gdM5mykStXAZDnM_cHqpSTBGU/view?usp=sharing
 
 
 elif choice == 'Login':
@@ -156,6 +131,22 @@ elif choice == 'Login':
 
                 st.sidebar.success(
                     f'Logged In As {email.title().split("@")[0]}')
+
+                reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report',
+                           'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report', 'User Profiles']
+
+                teams = ['Commercial', 'Head AM'] + \
+                    psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL''',
+                                  conn).vertical.tolist()
+
+                # Query to get the list of merchants from the database
+                all_mer = ['All'] + \
+                    psql.read_sql('SELECT DISTINCT merchname2 FROM datatable',
+                                  conn).merchname2.tolist()
+
+                # Query to get the list of verticals from the database
+                all_team = [
+                    'All']+psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL ''', conn).vertical.tolist()
 
                 today1, today, todaystr = today_dates(c)
 
@@ -315,4 +306,4 @@ elif choice == 'Login':
 
 
 elif choice == 'SignUp':
-    sign_up(c, conn, teams)
+    sign_up(c, conn)

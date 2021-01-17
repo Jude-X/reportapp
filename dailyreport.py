@@ -26,7 +26,7 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
 
     col11aa, col11bb, col11cc, col11dd, col11ee, col11ff, col11gg, col11hh = st.beta_columns(
         8)
-    col1a, col2a = st.beta_columns([1.5, 2])
+    col1a, col3a, col2a = st.beta_columns([1.5, 1, 2])
     col11aa.plotly_chart(card_indicators(
         value=mtdsumthis, ref=monthtarget, title=f'{month[0:3]} MTD', color=2))
     col11bb.plotly_chart(card_indicators(
@@ -47,14 +47,14 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
 
     dfmtdfig = table_fig(
         dfmtd, wide=650, long=400, title='MTD Table')
-    col1a.plotly_chart(dfmtdfig)
-    col1a.markdown(get_table_download_link(
+    col2a.plotly_chart(dfmtdfig)
+    col2a.markdown(get_table_download_link(
         dfmtd, 'MTD Table'), unsafe_allow_html=True)
 
     dfsumfig = table_fig(
         dfsum, long=450, wide=750, title='Product Performance Table')
-    col2a.plotly_chart(dfsumfig)
-    col2a.markdown(get_table_download_link(
+    col1a.plotly_chart(dfsumfig)
+    col1a.markdown(get_table_download_link(
         dfsum, 'Product Performance Table'), unsafe_allow_html=True)
 
     st.markdown('---')
