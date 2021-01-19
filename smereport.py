@@ -5,6 +5,7 @@ import pandas.io.sql as psql
 
 
 def sme_report(conn, c, today1, thisweek, lastweek, year, lastweekyear):
+    st.warning('Report under construction')
     st.subheader(
         f'SME Report - {today1.strftime("%A")}, {today1.strftime("%d-%B-%Y")}')
 

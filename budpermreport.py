@@ -4,7 +4,7 @@ from db import edit_vertargetable, get_vertarget
 from graphs import vertical_budget_graphs, table_fig, card_indicators
 
 
-def budget_performance_report(conn, result, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer, all_team=None):
+def budget_performance_report(conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer, all_team=None):
 
     if (result[0][2] in ['Commercial', 'Head AM']):
         st.subheader(
@@ -18,13 +18,13 @@ def budget_performance_report(conn, result, month, monthtarget, mtdsumthis, year
     col1, col2, col3, col4, col5, col6, col7, col8 = st.beta_columns(8)
 
     col1.plotly_chart(card_indicators(
-        value=monthtarget, ref=monthtarget, title=f'{month[0:3]} Budget', color=2))
+        value=monthtarget, ref=monthtarget, title=f'{month[0:3]} Target', color=2))
     col2.plotly_chart(card_indicators(
         value=mtdsumthis, ref=monthtarget, title=f'{month[0:3]} MTD', color=2))
     col3.plotly_chart(card_indicators(
         value=runrate, ref=monthtarget, title=f'{month[0:3]} Run Rate', rel=True, color=1))
     col4.plotly_chart(card_indicators(
-        value=round(mtdsumthis/monthtarget*100), ref=monthtarget, title=f'{month[0:3]} Target', rel=True, color=2, percent=True))
+        value=round(mtdsumthis/monthtarget*100), ref=monthtarget, title=f'{month[0:3]} Achieved', rel=True, color=2, percent=True))
 
     col5.plotly_chart(card_indicators(
         value=yeartarget, ref=monthtarget, title=f'{year} Budget', color=2))
@@ -33,7 +33,7 @@ def budget_performance_report(conn, result, month, monthtarget, mtdsumthis, year
     col7.plotly_chart(card_indicators(
         value=fyrunrate, ref=yeartarget, title=f'{year} FY Run Rate', rel=True, color=1))
     col8.plotly_chart(card_indicators(
-        value=round(ytdsum/yeartarget*100), ref=monthtarget, title=f'{year} Target', rel=True, color=1, percent=True))
+        value=round(ytdsum/yeartarget*100), ref=monthtarget, title=f'{year} Achieved', rel=True, color=1, percent=True))
 
     st.markdown('---')
 
@@ -42,6 +42,8 @@ def budget_performance_report(conn, result, month, monthtarget, mtdsumthis, year
     if result[0][2] == 'Commercial':
         team_name = col1t.multiselect(
             'Select Vertical', all_team, ['All'])
+        if not team_name:
+            team_name = ['All']
         col1t.markdown('---')
     elif result[0][2] == 'Head AM':
 
@@ -63,19 +65,26 @@ def budget_performance_report(conn, result, month, monthtarget, mtdsumthis, year
     team_merch = col1ta.multiselect(
         'Search Merchants..', all_mer, default=['All'])
 
+    if not team_merch:
+        team_merch = ['All']
+
     col1ta.markdown('---')
 
     team_class = col1ta.multiselect('Select Classification..', [
         'Large', 'Medium', 'Small'], default=['Large', 'Medium', 'Small'])
 
+    if not team_class:
+        team_class = ['Large', 'Medium', 'Small']
+
     col1ta.markdown('---')
 
     if 'SME & SMB' in team_name:
-        team_cat = col1ta.multiselect(
-            'Select Category..', ['SMB'], default=['SMB'])
+        team_cat = ['SMB']
     else:
         team_cat = col1ta.multiselect(
             'Select Category..', ['Enterprise', 'SMB'], default=['Enterprise', 'SMB'])
+        if not team_cat:
+            team_cat = ['Enterprise', 'SMB']
 
     dfteamrev_month = team_rev(
         conn, year, team_name, team_month, team_quar, team_class, team_cat, 'Month', team_merch)

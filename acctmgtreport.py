@@ -21,7 +21,7 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear, all_
 
     try:
         st.write(
-            f'{view_notes(c,today1,"AccMgtGain")[0][1].strftime("%d-%B-%Y")} Notes:  \n  \n {c,view_notes(today1,"AccMgtGain")[0][2]}')
+            f'{view_notes(c,today1,"AccMgtGain")[0][1].strftime("%d-%B-%Y")} Notes:  \n  \n {view_notes(c,today1,"AccMgtGain")[0][2]}')
     except Exception:
         st.warning(f'No notes for {today1}')
 
@@ -56,6 +56,8 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear, all_
         psql.read_sql('''SELECT DISTINCT merchname2 FROM datatable WHERE vertical IN %(s3)s ''',
                       conn, params={'s3': tuple(['Ent & NFIs'])}).merchname2.tolist()
     accmer_selected = st.multiselect('Select Merchants', all_accmer, ['All'])
+    if not accmer_selected:
+        accmer_selected = ['All']
     st.markdown("---")
     st.subheader('Monthly Revenue By Merchants')
     dfaccmer = accmer_monthrev(conn, year, ['Ent & NFIs'], accmer_selected)
