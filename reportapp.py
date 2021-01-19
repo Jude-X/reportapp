@@ -42,13 +42,12 @@ st.set_page_config(page_title='Flutterwave Report App',
 
 hide_streamlit_style = """
 <style>
-# MainMenu {visibility: hidden;}
+#MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 </style>
 
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
 
 # os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
 result1 = urlparse(os.getenv("HEROKU_POSTGRESQL_GOLD_URL"))
