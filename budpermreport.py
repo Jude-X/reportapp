@@ -90,6 +90,7 @@ def budget_performance_report(conn, result, thismonth, month, monthtarget, mtdsu
         conn, year, team_name, team_month, team_quar, team_class, team_cat, 'Month', team_merch)
     dfteamrev_prod = team_rev(
         conn, year, team_name, team_month, team_quar, team_class, team_cat, 'Product', team_merch)
+
     dfteamrev_merch = team_rev(
         conn, year, team_name, team_month, team_quar, team_class, team_cat, 'MerchName2', team_merch)
 

@@ -25,6 +25,9 @@ def pipeline_report(c, result, all_team=None):
             f'{result[0][2]} Pipeline Tracker - Welcome {result[0][1].title().split("@")[0]}')
         team_name = [result[0][2]]
 
+    if not team_name:
+        team_name = ['All']
+
     st.markdown('---')
     pipeStat, numoflive, dfpros, dfstage = process_pipeline(
         dfpip, team_name)

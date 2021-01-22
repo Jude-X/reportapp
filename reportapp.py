@@ -12,7 +12,7 @@ import numpy as np
 import calendar
 from utils import team_rev, today_dates, yesterday_dates, week_dates, month_dates, year_dates, color_change, pro_color_change, df_sum, mtd, ytd, get_table_download_link, daily_product_notes, week_summary, week_exfx_summary, week_colpay_summary, week_barter_performance, pos_agency, currency_performance, currency_note, weekly_new_old_merch, cohort_analysis, get_pipeline, process_pipeline, projection, gainers_losers
 from graphs import daily_report_graphs, weekly_report_graphs, vertical_budget_graphs, pipeline_tracker_graphs, card_indicators, card_indicators2, table_fig, bar_indicator
-from db import data_table, create_notes, create_usertable, create_bestcase, create_storetxn, view_all_targets, login_user, create_targetable, edit_vertargetable, get_vertarget, get_target, create_vertargetable, create_livetargetable, create_weeklynewold_merch, create_appusertable, create_entrpsemertable, create_ravestore, update_target
+from db import data_table, create_notes, create_usertable, create_bestcase, create_country, create_storetxn, view_all_targets, login_user, create_targetable, edit_vertargetable, get_vertarget, get_target, create_vertargetable, create_livetargetable, create_weeklynewold_merch, create_appusertable, create_entrpsemertable, create_ravestore, update_target
 from dailyreport import daily_report
 from weeklyreport import weekly_report
 from smereport import sme_report
@@ -91,6 +91,8 @@ create_weeklynewold_merch(c)
 create_appusertable(c)
 
 create_storetxn(c)
+
+create_country(c)
 
 
 menu = ['Home', 'Login', 'SignUp']
@@ -192,11 +194,8 @@ elif choice == 'Login':
                                   lastweekyear, thismonth, month, lastmonth, lastmonth1, year, lastmonthtarget, monthtarget, yeartarget, all_mer)
 
                 elif report == 'SME Report':
-                    try:
-                        sme_report(conn, c, today1, thisweek,
-                                   lastweek, year, lastweekyear)
-                    except:
-                        st.info('No data on this date')
+                    sme_report(conn, c, today1, thisweek,
+                               lastweek, year, lastweekyear)
 
                 elif report == 'Barter Report':
 

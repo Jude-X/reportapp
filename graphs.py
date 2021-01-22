@@ -201,7 +201,7 @@ def vertical_budget_graphs(dfteamrev_prod, dfteamrev_month):
         go.Bar(x=dfteamrev_prod.iloc[:, 1].values.tolist(), y=dfteamrev_prod.iloc[:, 0].values.tolist(), marker_color='#4169e1', orientation='h',
                text=dfteamrev_prod.iloc[:, 1].values.tolist(), textfont_color="white", texttemplate='%{text:.2s}', textposition='inside')
     ])
-    verticalprorevfig.update_layout(title='Revenue By Product', xaxis=dict(title='Revenue ($)'),
+    verticalprorevfig.update_layout(title='Revenue By Product', xaxis=dict(title='Revenue ($)'), yaxis=dict(title='Product', autorange="reversed"),
                                     autosize=True, width=600, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
     verticalprorevfig.update_yaxes(type='category')
@@ -316,7 +316,7 @@ def table_fig(df, wide=1000, long=500, title=''):
     return fig
 
 
-def card_indicators(value=10, ref=5, title='', rel=False, color=1, percent=False):
+def card_indicators(value=10, ref=5, title='', rel=False, color=1, percent=False, nopref=False):
     if color == 1:
         col = 'white'
     else:
@@ -330,6 +330,17 @@ def card_indicators(value=10, ref=5, title='', rel=False, color=1, percent=False
             number={'suffix': "%", 'font': {'size': 30,
                                             'color': 'black', 'family': 'Droid Serif'}},
             domain={'x': [0, 1], 'y': [0, 1]}))
+
+    elif nopref:
+        fig = go.Figure(go.Indicator(
+            mode="number",
+            value=value,
+            title={"text": title, 'font': {'size': 20,
+                                           'color': 'darkgrey', 'family': 'Droid Serif'}},
+            number={'font': {'size': 30,
+                             'color': 'black', 'family': 'Droid Serif'}},
+            domain={'x': [0, 1], 'y': [0, 1]}))
+
     else:
         fig = go.Figure(go.Indicator(
             mode="number",
@@ -346,20 +357,32 @@ def card_indicators(value=10, ref=5, title='', rel=False, color=1, percent=False
     return fig
 
 
-def card_indicators2(value=10, ref=5, title='', rel=False, color=1):
+def card_indicators2(value=10, ref=5, title='', rel=False, color=1, nopref=False):
     if color == 1:
         col = 'white'
     else:
         col = 'white'
-    fig = go.Figure(go.Indicator(
-        mode="number+delta",
-        value=value,
-        delta={'reference': ref, 'relative': rel},
-        title={"text": title, 'font': {'size': 20,
-                                       'color': 'darkgrey', 'family': 'Droid Serif'}},
-        number={'prefix': "$", 'font': {'size': 30,
-                                        'color': 'black', 'family': 'Droid Serif'}},
-        domain={'x': [0, 1], 'y': [0, 1]}))
+    if nopref:
+        fig = go.Figure(go.Indicator(
+            mode="number+delta",
+            value=value,
+            delta={'reference': ref, 'relative': rel},
+            title={"text": title, 'font': {'size': 20,
+                                           'color': 'darkgrey', 'family': 'Droid Serif'}},
+            number={'font': {'size': 30,
+                             'color': 'black', 'family': 'Droid Serif'}},
+            domain={'x': [0, 1], 'y': [0, 1]}))
+
+    else:
+        fig = go.Figure(go.Indicator(
+            mode="number+delta",
+            value=value,
+            delta={'reference': ref, 'relative': rel},
+            title={"text": title, 'font': {'size': 20,
+                                           'color': 'darkgrey', 'family': 'Droid Serif'}},
+            number={'prefix': "$", 'font': {'size': 30,
+                                            'color': 'black', 'family': 'Droid Serif'}},
+            domain={'x': [0, 1], 'y': [0, 1]}))
 
     fig.update_layout({'autosize': True, 'height': 90,
                        'width': 150, 'paper_bgcolor': col})
@@ -411,7 +434,7 @@ def clustered_graph(df, lgdbar, lgdline, grphtitle, xtitle, ytitle, width=1150):
         go.Scatter(name=lgdline, x=df.iloc[:, 0].values.tolist(), y=df.iloc[:, 2].values.tolist(), marker_color='#ff9933'), secondary_y=True)
 
     # Add figure title
-    fig.update_layout({'title': grphtitle, 'legend': {"orientation": "h"}, "xaxis": {"title": xtitle, "tickmode": 'linear', "dtick": 1},
+    fig.update_layout({'title': grphtitle, 'legend': {"orientation": "h", "y": 1.15}, "xaxis": {"title": xtitle, "tickmode": 'linear', "dtick": 1},
                        "autosize": True, "width": width, "paper_bgcolor": 'rgba(0,0,0,0)', "plot_bgcolor": 'rgba(0,0,0,0)'})
 
     # Set y-axes titles
@@ -419,4 +442,33 @@ def clustered_graph(df, lgdbar, lgdline, grphtitle, xtitle, ytitle, width=1150):
         title_text=lgdbar, secondary_y=False, gridcolor='#C0C0C0')
     fig.update_yaxes(title_text=lgdline, secondary_y=True)
 
+    return fig
+
+
+def vertical_bar(df, grphtitle, xtitle, ytitle, width=1150):
+    fig = go.Figure(data=[
+        go.Bar(x=df.iloc[:, 1].values.tolist(), y=df.iloc[:, 0].values.tolist(), marker_color='#4169e1', orientation='h',
+               text=df.iloc[:, 1].values.tolist(), textfont_color="white", textposition='inside')
+    ])
+    fig.update_layout(title=grphtitle, xaxis=dict(title=xtitle, visible=False, showticklabels=False), yaxis=dict(title=ytitle, autorange="reversed"),
+                      autosize=True, width=width, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+
+    fig.update_yaxes(type='category')
+    fig.update_xaxes(gridcolor='#C0C0C0', type="log")
+    return fig
+
+
+def multiple_bar_graphs(df, grphtitle, xtitle, ytitle, width=1150):
+    colors = ['#0099ff', '#ff9933']
+    data = []
+    for i in range(1, 5):
+        try:
+            data.append(go.Bar(name=f'Week {i} Revenue', x=df.iloc[:, 0].values.tolist(), y=df.iloc[:, i].values.tolist(
+            ), marker_color=colors[i-1], text=df.iloc[:, i].values.tolist(), textfont_color=colors[i-1], textposition='outside'))
+        except:
+            pass
+    fig = go.Figure(data=data)
+
+    fig.update_layout(barmode='group', title=grphtitle, legend=dict(orientation="h", y=1.15),
+                      yaxis=dict(title=ytitle, gridcolor='#C0C0C0'), xaxis=dict(title=xtitle), autosize=True, width=width, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig

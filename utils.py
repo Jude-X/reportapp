@@ -9,28 +9,6 @@ from calendar import monthrange
 from gsheet import gsheet_api_check, pull_sheet_data
 import pandas.io.sql as psql
 
-# background
-
-
-def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-
-def set_png_as_page_bg(png_file):
-    bin_str = get_base64_of_bin_file(png_file)
-    page_bg_img = '''
-        <style>
-        body {
-        background-image: url("data:image/png;base64,%s");
-        background-size: cover;
-        }
-        </style>
-        ''' % bin_str
-
-    st.markdown(page_bg_img, unsafe_allow_html=True)
-    return
 
 # Daily Report Functions
 
@@ -1188,6 +1166,9 @@ def accmer_monthrev(conn, year, team_name, accmer_selected):
 
 
 # SME Report Functions
+def sme_revanalysis(conn, thisweek, lastweek, year, lastweekyear):
+    pass
+
 
 # Bands Graph
 def sme_store(conn, thisweek, lastweek, year, lastweekyear):
@@ -1209,17 +1190,18 @@ def sme_store(conn, thisweek, lastweek, year, lastweekyear):
     # Top 10 Nigerian Stores
     dfnigstore = psql.read_sql('''
                         SELECT StoreName,
-                        COALESCE(SUM("rev$"),0) AS rev$
+                        COALESCE(SUM("rev$"),0) AS rev$,
+                        country
                         FROM storetxn
                         WHERE year = %(s2)s AND
                         week = %(s3)s AND
                         country = 'NG'
-                        GROUP BY 1
+                        GROUP BY 1,3
                         ORDER BY 2 DESC
                         ''',
                                conn, params={'s2': year, 's3': thisweek}
                                )
-    dfnigstore.columns = ['Store Name', 'Rev$']
+    dfnigstore.columns = ['Store Name', 'Rev$', 'Country']
     dfnigstore = dfnigstore.sort_values(
         'Rev$', ascending=False).reset_index(drop=True)
 
@@ -1246,17 +1228,18 @@ def sme_store(conn, thisweek, lastweek, year, lastweekyear):
                         COUNT(DISTINCT "merchantid")
                         FROM ravestore
                         WHERE year = %(s2)s AND
-                        country IN  %(s3)s
+                        country IN  %(s3)s AND
+                        week IN %(s4)s
                         GROUP BY 1,2
                         ORDER BY 3 DESC
                         ''',
                                   conn, params={'s2': year, 's3': tuple(
-                                      ['GH', 'KE', 'NG', 'ZA', 'UG', 'US', 'ZM', 'GB'])}
+                                      ['GH', 'KE', 'NG', 'ZA', 'UG', 'US', 'ZM', 'GB']), 's4': tuple(range(thisweek-3, thisweek+1))}
                                   )
     dfwksignupcou.columns = ['Week', 'Country', 'Merchantid']
 
     dfwksignupcou = pd.pivot_table(dfwksignupcou, index=[
-                                   'Country'], values='Merchantid', columns='Week', aggfunc='sum')
+                                   'Country'], values='Merchantid', columns='Week', aggfunc='sum').reset_index()
 
     mertrxndf = psql.read_sql('''
                         SELECT week,
@@ -1331,18 +1314,19 @@ def sme_reclassification(conn, c, year, ver, cat, subpro):
                         WITH t1 AS(
                         SELECT Merchants,
                         Month,
+                        vertical,
                         COALESCE(SUM("rev$"),0) AS rev
                         FROM datatable
                         WHERE year = %(s2)s AND
                         vertical NOT IN %(s3)s AND
                         category IN %(s4)s AND
                         SubProduct NOT IN %(s5)s 
-                        GROUP BY 1,2
-                        ORDER BY 3 DESC)
+                        GROUP BY 1,2,3
+                        ORDER BY 4 DESC)
 
                         SELECT t1.merchants AS merchants
                         FROM t1
-                        WHERE t1.rev > 3999
+                        WHERE t1.rev > 3999 AND t1.vertical != 'SME & SMB'
                         ''',
                            conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
                                cat), 's5': tuple(subpro)}).merchants.tolist()
@@ -1361,7 +1345,7 @@ def update_entrpsemer(c, entmer):
 
 def sme_country_weekrev(conn, year, ver, mer, cat, subpro, cou):
 
-    dfsmecou = psql.read_sql('''
+    dfsmecousana = psql.read_sql('''
                         SELECT week,
                         COALESCE(SUM("rev$"),0) rev$,
                         COUNT(DISTINCT "merchants")
@@ -1375,8 +1359,100 @@ def sme_country_weekrev(conn, year, ver, mer, cat, subpro, cou):
                         GROUP BY 1
                         ORDER BY 2 DESC
                         ''',
+                                 conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
+                                     mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': cou}
+                                 )
+
+    dfsmecousana.columns = ['Week', 'Rev$', 'Merchants']
+
+    return dfsmecousana
+
+
+def sme_summary(conn, thisweek, lastweek, year, lastweekyear, ver, mer, cat, subpro):
+    smerevsum = psql.read_sql('''
+                        SELECT COALESCE(SUM("rev$"),0) rev$
+                        FROM datatable
+                        WHERE year = %(s2)s AND
+                        vertical NOT IN %(s3)s AND
+                        merchants NOT IN  %(s4)s AND
+                        category IN %(s5)s AND
+                        SubProduct NOT IN %(s6)s AND
+                        Week = %(s7)s
+                        ''',
+                              conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
+                                  mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': thisweek}
+                              )
+
+    dfsmecurr = psql.read_sql('''
+                        SELECT currency,
+                        COALESCE(SUM("rev$"),0) rev$
+                        FROM datatable
+                        WHERE year = %(s2)s AND
+                        vertical NOT IN %(s3)s AND
+                        merchants NOT IN  %(s4)s AND
+                        category IN %(s5)s AND
+                        SubProduct NOT IN %(s6)s AND
+                        currency IN ('NGN','USD','GHS','EUR','KES','GBP','ZAR','UGX') AND
+                        Week = %(s7)s
+                        GROUP BY 1
+                        ORDER BY 2 DESC
+                        ''',
+                              conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
+                                  mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': thisweek}
+                              )
+
+    dfsmecou = psql.read_sql('''
+                        SELECT country,
+                        COALESCE(SUM("rev$"),0) rev$
+                        FROM datatable
+                        WHERE year = %(s2)s AND
+                        vertical NOT IN %(s3)s AND
+                        merchants NOT IN  %(s4)s AND
+                        category IN %(s5)s AND
+                        SubProduct NOT IN %(s6)s AND
+                        country IN ('NG','KE','GH','GB','UG','ZM') AND
+                        Week = %(s7)s
+                        GROUP BY 1
+                        ORDER BY 2 DESC
+                        ''',
                              conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
-                                 mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': cou}
+                                 mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': thisweek}
                              )
-    dfsmecou.columns = ['Week', 'Rev$', 'Merchants']
-    return dfsmecou
+
+    dfsmepro = psql.read_sql('''
+                        SELECT product,
+                        week,
+                        COALESCE(SUM("rev$"),0) rev$
+                        FROM datatable
+                        WHERE year = %(s2)s AND
+                        vertical NOT IN %(s3)s AND
+                        merchants NOT IN  %(s4)s AND
+                        category IN %(s5)s AND
+                        SubProduct NOT IN %(s6)s AND
+                        Week IN %(s7)s
+                        GROUP BY 1,2
+                        ORDER BY 3 DESC
+                        ''',
+                             conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
+                                 mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': tuple([thisweek, lastweek])}
+                             )
+
+    dfsmecurr.columns = ['Currency', 'Rev$']
+    dfsmecou.columns = ['Country', 'Rev$']
+    dfsmepro.colums = ['Product', 'Week', 'Rev$']
+
+    smeStat = [smerevsum]
+    return dfsmecurr, dfsmecou, dfsmepro, smeStat
+
+
+def get_country(conn, countrylist, df, first=True):
+    dfcountry = psql.read_sql('''SELECT abbreviation, country FROM country WHERE abbreviation IN %(s1)s''', conn, params={
+                              's1': tuple(countrylist)})
+    dfcountry.columns = ['Country', 'CountryReal']
+    if first:
+        df = pd.merge(dfcountry, df, on='Country', how='right')
+    else:
+        df = pd.merge(df, dfcountry, on='Country', how='left')
+    df.drop('Country', axis=1, inplace=True)
+    df.rename(columns={'CountryReal': 'Country'}, inplace=True)
+    return df

@@ -88,6 +88,12 @@ def create_ravestore(c):
 
               )
 
+# \COPY country(abbreviation,country) FROM 'C:\Users\Nzubechukwu Onyekaba\Desktop\project\country.csv' DELIMITER ',' CSV HEADER encoding 'UTF8';
+
+
+def create_country(c):
+    c.execute('CREATE TABLE IF NOT EXISTS country (id SERIAL PRIMARY KEY, abbreviation VARCHAR(2) UNIQUE, country VARCHAR(100) UNIQUE)')
+
 
 def create_entrpsemertable(c):
     c.execute(
@@ -274,19 +280,11 @@ def get_livetarget(c, team_name):
 
 def edit_vertargetable(c, team_name, monthtarget2=0, yeartarget2=0):
     if monthtarget2 != 0:
-        try:
-            c.execute('INSERT INTO vertargetable(vertical,month_target,year_target) VALUES(%s,%s,%s)',
-                      (team_name[0], monthtarget2, 1000000))
-        except:
-            c.execute('UPDATE vertargetable SET month_target = %s WHERE vertical = %s',
-                      (monthtarget2, team_name[0]))
+        c.execute('UPDATE vertargetable SET month_target = %s WHERE vertical = %s',
+                  (monthtarget2, team_name[0]))
     elif yeartarget2 != 0:
-        try:
-            c.execute('INSERT INTO vertargetable(month_target,year_target) VALUES(%s)',
-                      (team_name[0], 1000000, yeartarget2))
-        except:
-            c.execute('UPDATE vertargetable SET year_target = %s WHERE vertical = %s',
-                      (yeartarget2, team_name[0]))
+        c.execute('UPDATE vertargetable SET year_target = %s WHERE vertical = %s',
+                  (yeartarget2, team_name[0]))
     else:
         pass
 
