@@ -131,179 +131,187 @@ elif choice == 'Login':
         result = login_user(c, email, password1)
         if result:
             session_state.checkboxed = True
-            st.sidebar.success(
-                f'Logged In As {email.title().split("@")[0]}')
 
-            if result[0][4] and result[0][2] == 'Commercial':
-                reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report',
-                           'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report', 'User Profiles']
+            if bool(signin.button('Logout', key='logout1')):
+                logged_in = False
+                session_state.checkboxed = False
+                st.warning('You are about to log out, continue?')
+
             else:
-                reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report',
-                           'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report']
 
-            teams = ['Commercial', 'Head AM'] + \
-                psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL''',
-                              conn).vertical.tolist()
+                st.sidebar.success(
+                    f'Logged In As {email.title().split("@")[0]}')
 
-            # Query to get the list of merchants from the database
-            all_mer = ['All'] + \
-                psql.read_sql('SELECT DISTINCT merchname2 FROM datatable',
-                              conn).merchname2.tolist()
+                if result[0][4] and result[0][2] == 'Commercial':
+                    reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report',
+                               'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report', 'User Profiles']
+                else:
+                    reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report',
+                               'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report']
 
-            # Query to get the list of verticals from the database
-            all_team = [
-                'All']+psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL ''', conn).vertical.tolist()
+                teams = ['Commercial', 'Head AM'] + \
+                    psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL''',
+                                  conn).vertical.tolist()
 
-            today1, today, todaystr = today_dates(c)
-
-            yesterday1, yest, yesstr = yesterday_dates(today1)
-
-            thisweek, lastweek, lastweekyear = week_dates(today1)
-
-            lastmonth1, lastmonth, month, thismonth = month_dates(
-                today1)
-
-            year, numofdays, lastnumofdays, daysinyr, daysleft = year_dates(
-                today1)
-
-            if result[0][2] == 'Commercial':
-                report = st.sidebar.radio('Navigation', reports)
-                st.sidebar.markdown("---")
-                dfsum = df_sum(conn, today1, yesterday1,
-                               todaystr, today, yesstr, yest)
-
-                mtdsumthis, mtdsumlast, runrate, runratelast, dfmtd = mtd(
-                    conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays)
-
-                ytdsum, fyrunrate = ytd(conn, today1, daysleft)
-                try:
-                    lastmonthtarget, monthtarget, yeartarget = get_target(c)[
-                        0][1:4]
-                except Exception:
-                    update_target(c, 8000000,
-                                  8000000, 65900000)
-
-                if report == 'Daily Report':
-
-                    daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, yest, todaystr, today, month, lastmonth1,
-                                 year, lastmonthtarget, monthtarget, yeartarget, mtdsumthis, runrate, ytdsum, fyrunrate, dfmtd, dfsum, all_mer)
-
-                elif report == 'Weekly Report':
-
-                    weekly_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, yest, todaystr, today, thisweek, lastweek,
-                                  lastweekyear, thismonth, month, lastmonth, lastmonth1, year, lastmonthtarget, monthtarget, yeartarget, all_mer)
-
-                elif report == 'SME Report':
-                    sme_report(conn, c, today1, thisweek,
-                               lastweek, year, lastweekyear)
-
-                elif report == 'Barter Report':
-
-                    barter_report(today1)
-
-                elif report == 'Budget Performance Report':
-
-                    budget_performance_report(
-                        conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer, all_team)
-
-                elif report == 'Account Management Report':
-
-                    acct_mgt_report(c, conn, result, today1,
-                                    thismonth, year, lastweekyear, all_team)
-
-                elif report == 'Pipeline Performance Report':
-
-                    pipeline_report(c, result, all_team)
-
-                elif report == 'User Profiles':
-
-                    user_profile(c, conn, result)
-
-            elif result[0][2] == 'Head AM':
-
-                report = st.sidebar.radio('Navigation', reports[4:6])
-
-                if report == 'Account Management Report':
-
-                    acct_mgt_report(c, conn, result, today1,
-                                    thismonth, year, lastweekyear, all_team)
-
-                elif report == 'Budget Performance Report':
-
-                    team_name = ['Ent & NFIs']
-
-                    try:
-                        c.execute('''INSERT INTO vertargetable(vertical,month_target,year_target) VALUES(%s,%s,%s)''',
-                                  (team_name[0], 5000000, 30000000))
-                        monthtarget, yeartarget = get_vertarget(c, team_name)[0][
-                            2:]
-                    except:
-                        monthtarget, yeartarget = get_vertarget(c, team_name)[0][
-                            2:]
-
-                    mtdsumthis, mtdsumlast, runrate, runratelast, dfmtd = mtd(
-                        conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name)
-
-                    ytdsum, fyrunrate = ytd(
-                        conn, today1, daysleft, team_name)
-
-                    if result[0][4]:
-                        with st.beta_expander("Enter Target"):
-                            monthtarget2 = st.number_input(
-                                f"What is {month[0:3]} target", value=0)
-                            yeartarget2 = st.number_input(
-                                f"What is {year} target", value=0)
-                            edit_vertargetable(
-                                c, team_name, monthtarget2, yeartarget2)
-
-                    budget_performance_report(
-                        conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
-
-            elif result[0][2] in teams:
-                email == result[0][1].lower()
-                report = st.sidebar.radio('Navigation', reports[5:7])
-                team_name = result[0][2]
-                team_name = [team_name]
-
+                # Query to get the list of merchants from the database
                 all_mer = ['All'] + \
-                    psql.read_sql('''SELECT DISTINCT merchname2 FROM datatable WHERE vertical IN %(s6)s''',
-                                  conn, params={'s6': tuple(team_name)}).merchname2.tolist()
+                    psql.read_sql('SELECT DISTINCT merchname2 FROM datatable',
+                                  conn).merchname2.tolist()
 
-                if report == 'Budget Performance Report':
-                    try:
-                        c.execute('''INSERT INTO vertargetable(vertical,month_target,year_target) VALUES(%s,%s,%s)''',
-                                  (team_name[0], 5000000, 30000000))
-                        monthtarget, yeartarget = get_vertarget(c, team_name)[0][
-                            2:]
-                    except:
-                        monthtarget, yeartarget = get_vertarget(c, team_name)[0][
-                            2:]
+                # Query to get the list of verticals from the database
+                all_team = [
+                    'All']+psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL ''', conn).vertical.tolist()
+
+                today1, today, todaystr = today_dates(c)
+
+                yesterday1, yest, yesstr = yesterday_dates(today1)
+
+                thisweek, lastweek, lastweekyear = week_dates(today1)
+
+                lastmonth1, lastmonth, month, thismonth = month_dates(
+                    today1)
+
+                year, numofdays, lastnumofdays, daysinyr, daysleft = year_dates(
+                    today1)
+
+                if result[0][2] == 'Commercial':
+                    report = st.sidebar.radio('Navigation', reports)
+                    st.sidebar.markdown("---")
+                    dfsum = df_sum(conn, today1, yesterday1,
+                                   todaystr, today, yesstr, yest)
 
                     mtdsumthis, mtdsumlast, runrate, runratelast, dfmtd = mtd(
-                        conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name)
+                        conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays)
 
-                    ytdsum, fyrunrate = ytd(
-                        conn, today1, daysleft, team_name)
+                    ytdsum, fyrunrate = ytd(conn, today1, daysleft)
+                    try:
+                        lastmonthtarget, monthtarget, yeartarget = get_target(c)[
+                            0][1:4]
+                    except Exception:
+                        update_target(c, 8000000,
+                                      8000000, 65900000)
 
-                    if result[0][4]:
-                        with st.beta_expander("Enter Budget"):
-                            monthtarget2 = st.number_input(
-                                f"What is {month[0:3]} target", value=0)
+                    if report == 'Daily Report':
 
-                            edit_vertargetable(
-                                c, team_name, monthtarget2=monthtarget2)
+                        daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, yest, todaystr, today, month, lastmonth1,
+                                     year, lastmonthtarget, monthtarget, yeartarget, mtdsumthis, runrate, ytdsum, fyrunrate, dfmtd, dfsum, all_mer)
 
-                            yeartarget2 = st.number_input(
-                                f"What is {year} target", value=0)
+                    elif report == 'Weekly Report':
 
-                            edit_vertargetable(
-                                c, team_name, yeartarget2=yeartarget2)
+                        weekly_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, yest, todaystr, today, thisweek, lastweek,
+                                      lastweekyear, thismonth, month, lastmonth, lastmonth1, year, lastmonthtarget, monthtarget, yeartarget, all_mer)
 
-                    budget_performance_report(
-                        conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
+                    elif report == 'SME Report':
+                        sme_report(conn, c, today1, thisweek,
+                                   lastweek, year, lastweekyear)
 
-                elif report == 'Pipeline Performance Report':
-                    pipeline_report(c, result)
+                    elif report == 'Barter Report':
+
+                        barter_report(today1)
+
+                    elif report == 'Budget Performance Report':
+
+                        budget_performance_report(
+                            conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer, all_team)
+
+                    elif report == 'Account Management Report':
+
+                        acct_mgt_report(c, conn, result, today1,
+                                        thismonth, year, lastweekyear, all_team)
+
+                    elif report == 'Pipeline Performance Report':
+
+                        pipeline_report(c, result, all_team)
+
+                    elif report == 'User Profiles':
+
+                        user_profile(c, conn, result)
+
+                elif result[0][2] == 'Head AM':
+
+                    report = st.sidebar.radio('Navigation', reports[4:6])
+
+                    if report == 'Account Management Report':
+
+                        acct_mgt_report(c, conn, result, today1,
+                                        thismonth, year, lastweekyear, all_team)
+
+                    elif report == 'Budget Performance Report':
+
+                        team_name = ['Ent & NFIs']
+
+                        try:
+                            c.execute('''INSERT INTO vertargetable(vertical,month_target,year_target) VALUES(%s,%s,%s)''',
+                                      (team_name[0], 5000000, 30000000))
+                            monthtarget, yeartarget = get_vertarget(c, team_name)[0][
+                                2:]
+                        except:
+                            monthtarget, yeartarget = get_vertarget(c, team_name)[0][
+                                2:]
+
+                        mtdsumthis, mtdsumlast, runrate, runratelast, dfmtd = mtd(
+                            conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name)
+
+                        ytdsum, fyrunrate = ytd(
+                            conn, today1, daysleft, team_name)
+
+                        if result[0][4]:
+                            with st.beta_expander("Enter Target"):
+                                monthtarget2 = st.number_input(
+                                    f"What is {month[0:3]} target", value=0)
+                                yeartarget2 = st.number_input(
+                                    f"What is {year} target", value=0)
+                                edit_vertargetable(
+                                    c, team_name, monthtarget2, yeartarget2)
+
+                        budget_performance_report(
+                            conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
+
+                elif result[0][2] in teams:
+                    email == result[0][1].lower()
+                    report = st.sidebar.radio('Navigation', reports[5:7])
+                    team_name = result[0][2]
+                    team_name = [team_name]
+
+                    all_mer = ['All'] + \
+                        psql.read_sql('''SELECT DISTINCT merchname2 FROM datatable WHERE vertical IN %(s6)s''',
+                                      conn, params={'s6': tuple(team_name)}).merchname2.tolist()
+
+                    if report == 'Budget Performance Report':
+                        try:
+                            c.execute('''INSERT INTO vertargetable(vertical,month_target,year_target) VALUES(%s,%s,%s)''',
+                                      (team_name[0], 5000000, 30000000))
+                            monthtarget, yeartarget = get_vertarget(c, team_name)[0][
+                                2:]
+                        except:
+                            monthtarget, yeartarget = get_vertarget(c, team_name)[0][
+                                2:]
+
+                        mtdsumthis, mtdsumlast, runrate, runratelast, dfmtd = mtd(
+                            conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name)
+
+                        ytdsum, fyrunrate = ytd(
+                            conn, today1, daysleft, team_name)
+
+                        if result[0][4]:
+                            with st.beta_expander("Enter Budget"):
+                                monthtarget2 = st.number_input(
+                                    f"What is {month[0:3]} target", value=0)
+
+                                edit_vertargetable(
+                                    c, team_name, monthtarget2=monthtarget2)
+
+                                yeartarget2 = st.number_input(
+                                    f"What is {year} target", value=0)
+
+                                edit_vertargetable(
+                                    c, team_name, yeartarget2=yeartarget2)
+
+                        budget_performance_report(
+                            conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
+
+                    elif report == 'Pipeline Performance Report':
+                        pipeline_report(c, result)
         else:
             if password1:
                 st.warning('Please Enter valid Credentials or Sign up')
