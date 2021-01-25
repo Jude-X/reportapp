@@ -135,7 +135,7 @@ elif choice == 'Login':
             if bool(signin.button('Logout', key='logout1')):
                 logged_in = False
                 session_state.checkboxed = False
-                st.warning('You are about to log out, continue?')
+                st.warning("Click on 'Logout' again to confirm")
 
             else:
 
@@ -202,8 +202,11 @@ elif choice == 'Login':
                                       lastweekyear, thismonth, month, lastmonth, lastmonth1, year, lastmonthtarget, monthtarget, yeartarget, all_mer)
 
                     elif report == 'SME Report':
-                        sme_report(conn, c, today1, thisweek,
-                                   lastweek, year, lastweekyear)
+                        try:
+                            sme_report(conn, c, today1, thisweek,
+                                       lastweek, year, lastweekyear)
+                        except Exception:
+                            st.info('No data on this date')
 
                     elif report == 'Barter Report':
 
@@ -315,7 +318,6 @@ elif choice == 'Login':
         else:
             if password1:
                 st.warning('Please Enter valid Credentials or Sign up')
-
 
 elif choice == 'SignUp':
     sign_up(c, conn)
