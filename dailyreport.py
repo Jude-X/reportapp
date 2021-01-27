@@ -44,7 +44,7 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
     col11hh.plotly_chart(card_indicators(
         value=round(ytdsum/yeartarget*100), ref=monthtarget, title=f'{year} Target', rel=True, color=1, percent=True))
 
-    col1a, col3a, col2a = st.beta_columns([1, 0.35, 2])
+    col1a, col2a = st.beta_columns([1.5, 2])
 
     dfmtdfig = table_fig(
         dfmtd, wide=625, long=400, title='MTD Table')

@@ -155,8 +155,8 @@ elif choice == 'Login':
 
                 # Query to get the list of merchants from the database
                 all_mer = ['All'] + \
-                    psql.read_sql('SELECT DISTINCT merchname2 FROM datatable',
-                                  conn).merchname2.tolist()
+                    psql.read_sql('SELECT DISTINCT merchants FROM datatable',
+                                  conn).merchants.tolist()
 
                 # Query to get the list of verticals from the database
                 all_team = [
@@ -267,6 +267,10 @@ elif choice == 'Login':
                                 edit_vertargetable(
                                     c, team_name, monthtarget2, yeartarget2)
 
+                        all_mer = ['All'] + \
+                            psql.read_sql('''SELECT DISTINCT merchants FROM datatable WHERE vertical IN %(s6)s''',
+                                          conn, params={'s6': tuple(team_name)}).merchants.tolist()
+
                         budget_performance_report(
                             conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
 
@@ -277,8 +281,8 @@ elif choice == 'Login':
                     team_name = [team_name]
 
                     all_mer = ['All'] + \
-                        psql.read_sql('''SELECT DISTINCT merchname2 FROM datatable WHERE vertical IN %(s6)s''',
-                                      conn, params={'s6': tuple(team_name)}).merchname2.tolist()
+                        psql.read_sql('''SELECT DISTINCT merchants FROM datatable WHERE vertical IN %(s6)s''',
+                                      conn, params={'s6': tuple(team_name)}).merchants.tolist()
 
                     if report == 'Budget Performance Report':
                         try:

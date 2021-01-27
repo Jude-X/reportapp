@@ -846,7 +846,7 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
             q = f'''
                 SELECT product,
                 year,
-                merchname2,
+                merchants,
                 classification,
                 category,
                 month,
@@ -864,7 +864,7 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
             dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(team_class), 's4': tuple(team_cat), 's5': tuple(
                 range(team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1))})
             dfmain.columns = [
-                'Product', 'Year', 'MerchName2', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
+                'Product', 'Year', 'Merchants', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
             dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
                 ["Rev$"]].sum()
             dfteamrev1 = dfteamrev1.sort_values(
@@ -873,7 +873,7 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
             q = f'''
                 SELECT product,
                 year,
-                merchname2,
+                merchants,
                 classification,
                 category,
                 month,
@@ -885,14 +885,14 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 category IN %(s4)s AND
                 month IN %(s5)s AND
                 quarter IN %(s6)s AND
-                merchname2 IN %(s7)s
+                merchants IN %(s7)s
                 GROUP BY 1,2,3,4,5,6,7
                 ORDER BY 8 DESC
                 '''
             dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(team_class), 's4': tuple(team_cat), 's5': tuple(range(
                 team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1)), 's7': tuple(team_merch)})
             dfmain.columns = [
-                'Product', 'Year', 'MerchName2', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
+                'Product', 'Year', 'Merchants', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
             dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
                 ["Rev$"]].sum()
             dfteamrev1 = dfteamrev1.sort_values(
@@ -903,7 +903,7 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
             q = f'''
                 SELECT product,
                 year,
-                merchname2,
+                merchants,
                 classification,
                 category,
                 month,
@@ -922,7 +922,7 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
             dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(team_class), 's4': tuple(team_cat), 's5': tuple(
                 range(team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1)), 's7': tuple(team_name)})
             dfmain.columns = [
-                'Product', 'Year', 'MerchName2', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
+                'Product', 'Year', 'Merchants', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
             dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
                 ["Rev$"]].sum()
             dfteamrev1 = dfteamrev1.sort_values(
@@ -931,7 +931,7 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
             q = f'''
                 SELECT product,
                 year,
-                merchname2,
+                merchants,
                 classification,
                 category,
                 month,
@@ -943,7 +943,7 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
                 category IN %(s4)s AND
                 month IN %(s5)s AND
                 quarter IN %(s6)s AND
-                merchname2 IN %(s7)s AND
+                merchants IN %(s7)s AND
                 vertical IN %(s8)s
                 GROUP BY 1,2,3,4,5,6,7
                 ORDER BY 8 DESC
@@ -951,7 +951,7 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
             dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(team_class), 's4': tuple(team_cat), 's5': tuple(range(
                 team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1)), 's7': tuple(team_merch), 's8': tuple(team_name)})
             dfmain.columns = [
-                'Product', 'Year', 'MerchName2', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
+                'Product', 'Year', 'Merchants', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
             dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
                 ["Rev$"]].sum()
             dfteamrev1 = dfteamrev1.sort_values(
