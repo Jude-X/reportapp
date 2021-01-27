@@ -147,9 +147,9 @@ elif choice == 'Login':
                                'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report', 'User Profiles']
                 else:
                     reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report',
-                               'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report']
+                               'Budget Performance Report', 'Pipeline Performance Report', 'Account Management Report']
 
-                teams = ['Commercial', 'Head AM'] + \
+                teams = ['Commercial', 'Acct Mgt'] + \
                     psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL''',
                                   conn).vertical.tolist()
 
@@ -230,53 +230,18 @@ elif choice == 'Login':
 
                         user_profile(c, conn, result)
 
-                elif result[0][2] == 'Head AM':
+                elif result[0][2] == 'Acct Mgt':
 
-                    report = st.sidebar.radio('Navigation', reports[4:6])
+                    report = st.sidebar.radio('Navigation', reports[6:])
 
                     if report == 'Account Management Report':
 
                         acct_mgt_report(c, conn, result, today1,
                                         thismonth, year, lastweekyear, all_team)
 
-                    elif report == 'Budget Performance Report':
-
-                        team_name = ['Ent & NFIs']
-
-                        try:
-                            c.execute('''INSERT INTO vertargetable(vertical,month_target,year_target) VALUES(%s,%s,%s)''',
-                                      (team_name[0], 5000000, 30000000))
-                            monthtarget, yeartarget = get_vertarget(c, team_name)[0][
-                                2:]
-                        except:
-                            monthtarget, yeartarget = get_vertarget(c, team_name)[0][
-                                2:]
-
-                        mtdsumthis, mtdsumlast, runrate, runratelast, dfmtd = mtd(
-                            conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name)
-
-                        ytdsum, fyrunrate = ytd(
-                            conn, today1, daysleft, team_name)
-
-                        if result[0][4]:
-                            with st.beta_expander("Enter Target"):
-                                monthtarget2 = st.number_input(
-                                    f"What is {month[0:3]} target", value=0)
-                                yeartarget2 = st.number_input(
-                                    f"What is {year} target", value=0)
-                                edit_vertargetable(
-                                    c, team_name, monthtarget2, yeartarget2)
-
-                        all_mer = ['All'] + \
-                            psql.read_sql('''SELECT DISTINCT merchants FROM datatable WHERE vertical IN %(s6)s''',
-                                          conn, params={'s6': tuple(team_name)}).merchants.tolist()
-
-                        budget_performance_report(
-                            conn, result, today1, thisweek, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
-
                 elif result[0][2] in teams:
                     email == result[0][1].lower()
-                    report = st.sidebar.radio('Navigation', reports[5:7])
+                    report = st.sidebar.radio('Navigation', reports[4:6])
                     team_name = result[0][2]
                     team_name = [team_name]
 

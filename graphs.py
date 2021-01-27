@@ -258,7 +258,7 @@ def pipeline_tracker_graphs(numoflive, dfstage, livetarget=250):
     return livefig, stagefig
 
 
-def table_fig(df, wide=1000, long=500, title=''):
+def table_fig(df, wide=1000, long=500, title='', smallfirst=False):
 
     for col in df.columns:
         try:
@@ -274,6 +274,9 @@ def table_fig(df, wide=1000, long=500, title=''):
     if len(df.columns) < 3:
         width = wide//noofcols
         cw = [2*width/3, 1*width/3]
+    elif smallfirst:
+        width = wide//noofcols
+        cw = [width, width, width]
     else:
         width = wide//(noofcols-1)
         cw = [2*width, width, width, width]

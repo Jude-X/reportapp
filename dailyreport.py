@@ -44,16 +44,16 @@ def daily_report(c, conn, result, today1, email, numofdays, yesterday1, yesstr, 
     col11hh.plotly_chart(card_indicators(
         value=round(ytdsum/yeartarget*100), ref=monthtarget, title=f'{year} Target', rel=True, color=1, percent=True))
 
-    col1a, col2a = st.beta_columns([1.8, 2])
+    col1a, col2a = st.beta_columns([1.7, 2])
 
     dfmtdfig = table_fig(
-        dfmtd, wide=625, long=400, title='MTD Table')
+        dfmtd, wide=625, long=400, title='MTD Table', smallfirst=True)
     col1a.plotly_chart(dfmtdfig)
     col1a.markdown(get_table_download_link(
         dfmtd, 'MTD Table'), unsafe_allow_html=True)
 
     dfsumfig = table_fig(
-        dfsum, long=400, wide=725, title='Product Performance Table')
+        dfsum, long=400, wide=725, title='Product Performance Table', smallfirst=True)
     col2a.plotly_chart(dfsumfig)
     col2a.markdown(get_table_download_link(
         dfsum, 'Product Performance Table'), unsafe_allow_html=True)
