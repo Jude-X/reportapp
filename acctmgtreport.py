@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import gainers_losers, accmer_monthrev
+from utils import gainers_losers, accmer_monthrev, get_table_download_link
 from graphs import table_fig, acct_mgt_graphs
 from db import view_notes, edit_notes
 import pandas.io.sql as psql
@@ -17,7 +17,6 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear, all_
                                         year, lastweekyear, thismonth, team_name)
 
     st.markdown('---')
-    st.subheader('Gainers')
 
     try:
         st.write(
@@ -31,11 +30,12 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear, all_
                 f'Enter gainers note for {today1.strftime("%d-%B-%Y")}')
             edit_notes(c, today1, gainersnote, "AccMgtGain")
 
-    gainfig = table_fig(dfxxgain, wide=1250)
+    gainfig = table_fig(dfxxgain, title='Gainers', wide=1250)
     st.plotly_chart(gainfig)
+    st.markdown(get_table_download_link(
+        dfxxgain, 'Gainers Table'), unsafe_allow_html=True)
 
     st.markdown("---")
-    st.subheader('Losers')
 
     try:
         st.write(
@@ -49,8 +49,10 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear, all_
                 f'Enter losers note for {today1.strftime("%d-%B-%Y")}')
             edit_notes(c, today1, losersnote, "AccMgtLoss")
 
-    lossfig = table_fig(dfxxloss, wide=1250)
+    lossfig = table_fig(dfxxloss, title='Losers', wide=1250)
     st.plotly_chart(lossfig)
+    st.markdown(get_table_download_link(
+        dfxxloss, 'Losers Table'), unsafe_allow_html=True)
 
     all_accmer = ['All'] + \
         psql.read_sql('''SELECT DISTINCT merchname2 FROM datatable WHERE vertical IN %(s3)s ''',

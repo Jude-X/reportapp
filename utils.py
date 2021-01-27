@@ -1355,6 +1355,7 @@ def sme_country_weekrev(conn, year, ver, mer, cat, subpro, cou):
                         merchants NOT IN  %(s4)s AND
                         category IN %(s5)s AND
                         SubProduct NOT IN %(s6)s AND
+                        Product != 'Barter' AND
                         Country = %(s7)s
                         GROUP BY 1
                         ORDER BY 2 DESC
@@ -1369,54 +1370,79 @@ def sme_country_weekrev(conn, year, ver, mer, cat, subpro, cou):
 
 
 def sme_summary(conn, thisweek, lastweek, year, lastweekyear, ver, mer, cat, subpro):
-    smerevsum = psql.read_sql('''
-                        SELECT COALESCE(SUM("rev$"),0) rev$
+    smestat = psql.read_sql('''
+                        SELECT week,
+                        COALESCE(SUM("rev$"),0) rev$,
+                        COALESCE(SUM("tpv$"),0) tpv$,
+                        COALESCE(COUNT(DISTINCT "merchants"),0) merchants
                         FROM datatable
-                        WHERE year = %(s2)s AND
+                        WHERE year IN %(s2)s AND
                         vertical NOT IN %(s3)s AND
                         merchants NOT IN  %(s4)s AND
                         category IN %(s5)s AND
                         SubProduct NOT IN %(s6)s AND
-                        Week = %(s7)s
+                        Product != 'Barter' AND
+                        Week IN %(s7)s
+                        GROUP BY 1
                         ''',
-                              conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
-                                  mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': thisweek}
-                              )
+                            conn, params={'s2': tuple([year, lastweekyear]), 's3': tuple(ver), 's4': tuple(
+                                mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': tuple([thisweek, lastweek])}
+                            )
 
     dfsmecurr = psql.read_sql('''
                         SELECT currency,
                         COALESCE(SUM("rev$"),0) rev$
                         FROM datatable
-                        WHERE year = %(s2)s AND
+                        WHERE year IN %(s2)s AND
                         vertical NOT IN %(s3)s AND
                         merchants NOT IN  %(s4)s AND
                         category IN %(s5)s AND
                         SubProduct NOT IN %(s6)s AND
+                        Product != 'Barter' AND
                         currency IN ('NGN','USD','GHS','EUR','KES','GBP','ZAR','UGX') AND
                         Week = %(s7)s
                         GROUP BY 1
                         ORDER BY 2 DESC
                         ''',
-                              conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
+                              conn, params={'s2': tuple([year, lastweekyear]), 's3': tuple(ver), 's4': tuple(
                                   mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': thisweek}
                               )
 
-    dfsmecou = psql.read_sql('''
+    dfsmecouwks = psql.read_sql('''
                         SELECT country,
+                        week,
                         COALESCE(SUM("rev$"),0) rev$
                         FROM datatable
-                        WHERE year = %(s2)s AND
+                        WHERE year IN %(s2)s AND
                         vertical NOT IN %(s3)s AND
                         merchants NOT IN  %(s4)s AND
                         category IN %(s5)s AND
                         SubProduct NOT IN %(s6)s AND
+                        Product != 'Barter' AND
                         country IN ('NG','KE','GH','GB','UG','ZM') AND
-                        Week = %(s7)s
-                        GROUP BY 1
-                        ORDER BY 2 DESC
+                        Week IN %(s7)s
+                        GROUP BY 1,2
+                        ORDER BY 3 DESC
                         ''',
-                             conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
-                                 mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': thisweek}
+                                conn, params={'s2': tuple([year, lastweekyear]), 's3': tuple(ver), 's4': tuple(
+                                    mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': tuple(range(thisweek-4, thisweek+1))}
+                                )
+
+    dfsmewks = psql.read_sql('''
+                        SELECT week,
+                        COALESCE(SUM("rev$"),0) rev$,
+                        COALESCE(COUNT(DISTINCT "merchants"),0) merchants
+                        FROM datatable
+                        WHERE year IN %(s2)s AND
+                        vertical NOT IN %(s3)s AND
+                        merchants NOT IN  %(s4)s AND
+                        category IN %(s5)s AND
+                        SubProduct NOT IN %(s6)s AND
+                        Product != 'Barter'
+                        GROUP BY 1
+                        ''',
+                             conn, params={'s2': tuple([year, lastweekyear]), 's3': tuple(ver), 's4': tuple(
+                                 mer), 's5': tuple(cat), 's6': tuple(subpro)}
                              )
 
     dfsmepro = psql.read_sql('''
@@ -1424,25 +1450,45 @@ def sme_summary(conn, thisweek, lastweek, year, lastweekyear, ver, mer, cat, sub
                         week,
                         COALESCE(SUM("rev$"),0) rev$
                         FROM datatable
-                        WHERE year = %(s2)s AND
+                        WHERE year IN %(s2)s AND
                         vertical NOT IN %(s3)s AND
                         merchants NOT IN  %(s4)s AND
                         category IN %(s5)s AND
                         SubProduct NOT IN %(s6)s AND
+                        Product != 'Barter' AND
                         Week IN %(s7)s
                         GROUP BY 1,2
                         ORDER BY 3 DESC
                         ''',
-                             conn, params={'s2': year, 's3': tuple(ver), 's4': tuple(
+                             conn, params={'s2': tuple([year, lastweekyear]), 's3': tuple(ver), 's4': tuple(
                                  mer), 's5': tuple(cat), 's6': tuple(subpro), 's7': tuple([thisweek, lastweek])}
                              )
 
+    smestat.columns = ['Week', 'Rev$', 'TPV$', 'Merchants']
+    dfsmewks.columns = ['Week', 'Rev$', 'Merchants']
     dfsmecurr.columns = ['Currency', 'Rev$']
-    dfsmecou.columns = ['Country', 'Rev$']
-    dfsmepro.colums = ['Product', 'Week', 'Rev$']
+    dfsmecouwks.columns = ['Country', 'Week', 'Rev$']
+    dfsmepro.columns = ['Product', 'Week', 'Rev$']
 
-    smeStat = [smerevsum]
-    return dfsmecurr, dfsmecou, dfsmepro, smeStat
+    dfsmecou = dfsmecouwks[dfsmecouwks.Week == thisweek]
+    dfsmecou = dfsmecou.groupby('Country')[['Rev$']].sum()
+    dfsmecou = dfsmecou.sort_values('Rev$', ascending=False).reset_index()
+
+    smerevsum = smestat.loc[(smestat.Week == thisweek), 'Rev$'].item()
+    smerevsumL = smestat.loc[(smestat.Week == lastweek), 'Rev$'].item()
+    smetpvsum = smestat.loc[(smestat.Week == thisweek), 'TPV$'].item()
+    smetpvsumL = smestat.loc[(smestat.Week == lastweek), 'TPV$'].item()
+    smemercnt = smestat.loc[(smestat.Week == thisweek), 'Merchants'].item()
+    smemercntL = smestat.loc[(smestat.Week == lastweek), 'Merchants'].item()
+    smeStat = [smerevsum, smerevsumL, smetpvsum,
+               smetpvsumL, smemercnt, smemercntL]
+    dfsmepro = pd.pivot(dfsmepro, index='Product',
+                        columns='Week', values='Rev$').reset_index()
+
+    dfsmecouwks = pd.pivot(dfsmecouwks, index='Country',
+                           columns='Week', values='Rev$').reset_index()
+
+    return dfsmecurr, dfsmecouwks, dfsmewks, dfsmecou, dfsmepro, smeStat
 
 
 def get_country(conn, countrylist, df, first=True):
@@ -1451,6 +1497,7 @@ def get_country(conn, countrylist, df, first=True):
     dfcountry.columns = ['Country', 'CountryReal']
     if first:
         df = pd.merge(dfcountry, df, on='Country', how='right')
+
     else:
         df = pd.merge(df, dfcountry, on='Country', how='left')
     df.drop('Country', axis=1, inplace=True)

@@ -1,6 +1,6 @@
 import streamlit as st
 from db import get_livetarget, edit_livetargetable
-from utils import process_pipeline, get_pipeline
+from utils import process_pipeline, get_pipeline, get_table_download_link
 from graphs import pipeline_tracker_graphs, table_fig, bar_indicator
 
 
@@ -55,5 +55,8 @@ def pipeline_report(c, result, all_team=None):
     colp2.subheader('Monthly Revenue by Prospects')
     dfprosfig = table_fig(dfpros, wide=900, long=700)
     colp2.plotly_chart(dfprosfig)
+    colp2.markdown(get_table_download_link(
+        dfpros, 'Monthly Revenue by Prospects Table'), unsafe_allow_html=True)
+
     st.markdown('---')
     st.plotly_chart(stagefig)

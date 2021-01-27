@@ -448,7 +448,7 @@ def clustered_graph(df, lgdbar, lgdline, grphtitle, xtitle, ytitle, width=1150):
 def vertical_bar(df, grphtitle, xtitle, ytitle, width=1150):
     fig = go.Figure(data=[
         go.Bar(x=df.iloc[:, 1].values.tolist(), y=df.iloc[:, 0].values.tolist(), marker_color='#4169e1', orientation='h',
-               text=df.iloc[:, 1].values.tolist(), textfont_color="white", textposition='inside')
+               text=df.iloc[:, 1].values.tolist(), textfont_color="white", texttemplate='%{text:.2s}', textposition='inside')
     ])
     fig.update_layout(title=grphtitle, xaxis=dict(title=xtitle, visible=False, showticklabels=False), yaxis=dict(title=ytitle, autorange="reversed"),
                       autosize=True, width=width, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
@@ -464,7 +464,7 @@ def multiple_bar_graphs(df, grphtitle, xtitle, ytitle, width=1150):
     for i in range(1, 5):
         try:
             data.append(go.Bar(name=f'Week {i} Revenue', x=df.iloc[:, 0].values.tolist(), y=df.iloc[:, i].values.tolist(
-            ), marker_color=colors[i-1], text=df.iloc[:, i].values.tolist(), textfont_color=colors[i-1], textposition='outside'))
+            ), marker_color=colors[i-1], text=df.iloc[:, i].values.tolist(), textfont_color=colors[i-1], texttemplate='%{text:.2s}', textposition='outside'))
         except:
             pass
     fig = go.Figure(data=data)

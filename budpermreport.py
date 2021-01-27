@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import team_rev
+from utils import team_rev, get_table_download_link
 from db import edit_vertargetable, get_vertarget
 from graphs import vertical_budget_graphs, table_fig, card_indicators
 
@@ -102,3 +102,5 @@ def budget_performance_report(conn, result, thismonth, month, monthtarget, mtdsu
     col5ta.subheader('Revenue by Merchants')
     dfteamrev_merchfig = table_fig(dfteamrev_merch, wide=550)
     col5ta.plotly_chart(dfteamrev_merchfig)
+    col5ta.markdown(get_table_download_link(
+        dfteamrev_merch, 'Revenue by Merchants Table'), unsafe_allow_html=True)

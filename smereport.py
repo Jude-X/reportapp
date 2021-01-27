@@ -61,8 +61,13 @@ def sme_report(conn, c, today1, thisweek, lastweek, year, lastweekyear):
 
     colb1, colb2, colb3 = st.beta_columns(3)
 
-    dfsmecurr, dfsmecou, dfsmepro, smeStat = sme_summary(
+    dfsmecurr, dfsmecouwks, dfsmewks, dfsmecou, dfsmepro, smeStat = sme_summary(
         conn, thisweek, lastweek, year, lastweekyear, ver, mer, cat, subpro)
+
+    dfsmecou = get_country(
+        conn, dfsmecou.loc[:, 'Country'].values.tolist(), dfsmecou, first=True)
+
+    dfsmecou = dfsmecou.sort_values('Rev$', ascending=False)
 
     dfsmecoufig = vertical_bar(dfsmecou, grphtitle='Revenue Per Country',
                                xtitle='Revenue ($)', ytitle='Country', width=500)
@@ -82,6 +87,44 @@ def sme_report(conn, c, today1, thisweek, lastweek, year, lastweekyear):
                                xtitle='Count of Store Signup', ytitle='Country', width=500)
 
     colaa1.plotly_chart(strsgnupfig)
+
+    st.markdown('---')
+
+    st.subheader('SME Revenue Analysis')
+
+    st.markdown('---')
+
+    col11aa, col11bb, col11cc = st.beta_columns(3)
+    col11aa.plotly_chart(card_indicators2(
+        value=smeStat[0], ref=smeStat[1], title='Revenue($)', color=2, rel=True, nopref=True))
+    col11bb.plotly_chart(card_indicators2(
+        value=smeStat[2], ref=smeStat[3], title='TPV($)', color=2, rel=True, nopref=True))
+    col11cc.plotly_chart(card_indicators2(
+        value=smeStat[4], ref=smeStat[5], title='Merchants', color=2, rel=True, nopref=True))
+
+    dfsmecouwks = get_country(
+        conn, dfsmecouwks.loc[:, 'Country'].values.tolist(), dfsmecouwks, first=True)
+
+    dfsmecouwksfig = multiple_bar_graphs(
+        dfsmecouwks, grphtitle='Weekly Revenue Trend By Country', xtitle='Week', ytitle='Revenue ($)', width=1150)
+
+    st.plotly_chart(dfsmecouwksfig)
+
+    col1, col2, col3 = st.beta_columns([1, 4, 2])
+
+    smeprofig = vertical_bar(dfsmepro, grphtitle='Revenue Per Product',
+                             xtitle='Revenue', ytitle='Product', width=500)
+
+    col1.plotly_chart(smeprofig)
+
+    st.markdown('---')
+
+    st.subheader('SME YTD  Trend Analysis')
+
+    smewksfig = clustered_graph(dfsmewks, 'Revenue ($)', 'Transacting Merchants',
+                                grphtitle=f'Weekly Revenue Trend Vs Transacting Merchants', xtitle='Week', ytitle='Rev$', width=1250)
+
+    st.plotly_chart(smewksfig)
 
     st.markdown('---')
 
