@@ -837,8 +837,8 @@ def weekly_new_old_merch(conn, merlist, year):
     except Exception:
         return dfNewp
 
-# Team Function
 
+# budget performance
 
 def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat, team_parameter, team_merch):
     if 'All' in team_name:
@@ -961,7 +961,89 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
     return dfteamrev1
 
 
-# budget performance
+def team_daily(conn, today1, year, team_name):
+    lastweekday = today1 - datetime.timedelta(days=6)
+    lastweekday = lastweekday.strftime('%Y-%m-%d')
+    if 'All' in team_name:
+        q = f'''
+                SELECT merchants,
+                date,
+                COALESCE(SUM("rev$"),0) rev$
+                FROM datatable
+                WHERE year = %(s2)s AND
+                date >=  %(s3)s AND
+                product != 'Barter'
+                GROUP BY 1,2
+                ORDER BY 3 DESC
+                    '''
+        dfmain = psql.read_sql(
+            q, conn, params={'s2': year, 's3': lastweekday})
+    else:
+        q = f'''
+                SELECT merchants,
+                date,
+                COALESCE(SUM("rev$"),0) rev$
+                FROM datatable
+                WHERE year = %(s2)s AND
+                vertical IN %(s3)s AND
+                date >= %(s4)s AND
+                product != 'Barter' 
+                GROUP BY 1,2
+                ORDER BY 3 DESC
+                    '''
+        dfmain = psql.read_sql(
+            q, conn, params={'s2': year, 's3': tuple(team_name), 's4': lastweekday})
+    dfmain.columns = ['Merchants', 'Date', 'Rev$']
+    dfmain['Date'] = dfmain['Date'].map(lambda x: x.strftime('%d-%m-%Y'))
+    dfmain = pd.pivot_table(dfmain, index='Merchants', columns='Date', values=[
+                            'Rev$'], aggfunc='sum', fill_value=0).reset_index()
+    dfmain = dfmain.sort_values(
+        by=dfmain.columns.tolist()[-1], ascending=False).reset_index(drop=True)
+    return dfmain
+
+
+def team_weekly(conn, today1, thisweek, year, team_name):
+    if thisweek < 5:
+        startweek = 1
+    else:
+        startweek = thisweek - 5
+    if 'All' in team_name:
+        q = f'''
+                SELECT merchants,
+                week,
+                COALESCE(SUM("rev$"),0) rev$
+                FROM datatable
+                WHERE year = %(s2)s AND
+                product != 'Barter' AND
+                week >= %(s3)s
+                GROUP BY 1,2
+                ORDER BY 3 DESC
+                    '''
+        dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': startweek})
+
+    else:
+        q = f'''
+                SELECT merchants,
+                week,
+                COALESCE(SUM("rev$"),0) rev$
+                FROM datatable
+                WHERE year = %(s2)s AND
+                vertical IN %(s3)s AND
+                product != 'Barter' AND
+                week >= %(s4)s
+                GROUP BY 1,2
+                ORDER BY 3 DESC
+                    '''
+        dfmain = psql.read_sql(
+            q, conn, params={'s2': year, 's3': tuple(team_name), 's4': startweek})
+
+    dfmain.columns = ['Merchants', 'Week', 'Rev$']
+    dfmain = pd.pivot_table(dfmain, index='Merchants', columns='Week', values=[
+                            'Rev$'], aggfunc='sum', fill_value=0).reset_index()
+    dfmain = dfmain.sort_values(
+        by=dfmain.columns.tolist()[-1], ascending=False).reset_index(drop=True)
+    return dfmain
+
 
 @st.cache(ttl=3600, show_spinner=False)
 def get_pipeline(sheetnames=['BUSINESS DEV_OPEYEMI FOWLER', 'IMTO_BASSEY', 'TRAVEL & HOSPITALITY_YEWANDE', 'GAMING_WALE', 'GHANA',

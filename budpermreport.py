@@ -1,10 +1,10 @@
 import streamlit as st
-from utils import team_rev, get_table_download_link
+from utils import team_rev, get_table_download_link, team_daily, team_weekly
 from db import edit_vertargetable, get_vertarget
 from graphs import vertical_budget_graphs, table_fig, card_indicators
 
 
-def budget_performance_report(conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer, all_team=None):
+def budget_performance_report(conn, result, today1, thisweek, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer, all_team=None):
 
     if (result[0][2] in ['Commercial', 'Head AM']):
         st.subheader(
@@ -99,8 +99,24 @@ def budget_performance_report(conn, result, thismonth, month, monthtarget, mtdsu
 
     col2t.plotly_chart(verticalmonrevfig)
     col2ta.plotly_chart(verticalprorevfig)
-    col5ta.subheader('Revenue by Merchants')
-    dfteamrev_merchfig = table_fig(dfteamrev_merch, wide=550)
+    dfteamrev_merchfig = table_fig(
+        dfteamrev_merch, title='Revenue by Merchants', wide=550)
     col5ta.plotly_chart(dfteamrev_merchfig)
     col5ta.markdown(get_table_download_link(
         dfteamrev_merch, 'Revenue by Merchants Table'), unsafe_allow_html=True)
+
+    dfteamdaily = team_daily(conn, today1, year, team_name)
+
+    dfteamdailyfig = table_fig(
+        dfteamdaily, title='Revenue by Merchants DoD', wide=1250)
+    st.plotly_chart(dfteamdailyfig)
+    st.markdown(get_table_download_link(
+        dfteamdaily, 'Daily Revenue Of Merchants Table'), unsafe_allow_html=True)
+
+    dfteamweekly = team_weekly(conn, today1, thisweek, year, team_name)
+
+    dfteamweeklyfig = table_fig(
+        dfteamweekly, title='Revenue by Merchants WoW', wide=1250)
+    st.plotly_chart(dfteamweeklyfig)
+    st.markdown(get_table_download_link(
+        dfteamweekly, 'Weekly Revenue Of Merchants Table'), unsafe_allow_html=True)

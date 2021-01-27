@@ -215,7 +215,7 @@ elif choice == 'Login':
                     elif report == 'Budget Performance Report':
 
                         budget_performance_report(
-                            conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer, all_team)
+                            conn, result, today1, thisweek, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer, all_team)
 
                     elif report == 'Account Management Report':
 
@@ -272,7 +272,7 @@ elif choice == 'Login':
                                           conn, params={'s6': tuple(team_name)}).merchants.tolist()
 
                         budget_performance_report(
-                            conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
+                            conn, result, today1, thisweek, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
 
                 elif result[0][2] in teams:
                     email == result[0][1].lower()
@@ -315,7 +315,7 @@ elif choice == 'Login':
                                     c, team_name, yeartarget2=yeartarget2)
 
                         budget_performance_report(
-                            conn, result, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
+                            conn, result, today1, thisweek, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
 
                     elif report == 'Pipeline Performance Report':
                         pipeline_report(c, result)
