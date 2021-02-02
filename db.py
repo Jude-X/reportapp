@@ -405,6 +405,8 @@ def delete_weeklynewold_merch(c, new_old, del_merch_name2):
     else:
         pass
 
+# \COPY appusers(email, vertical) FROM 'C:\Users\Nzubechukwu Onyekaba\Desktop\project\appusers.csv' DELIMITER ',' CSV HEADER encoding 'UTF8';
+
 
 def create_appusertable(c):
     c.execute(

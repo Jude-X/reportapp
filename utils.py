@@ -19,7 +19,7 @@ def today_dates(c):
 
     with st.beta_expander(""):
         today1 = st.date_input(
-            'Date', latestdate, min_value=datetime.datetime(2020, 1, 1), max_value=latestdate)
+            'Date', latestdate, min_value=datetime.datetime(datetime.datetime.now().year, 1, 1), max_value=latestdate, key='general')
 
     today = today1.strftime("%d-%b-%Y")
     todaystr = today1.strftime("%a")
@@ -212,7 +212,7 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
                             month,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s AND vertical IN %(s6)s
+                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s AND vertical IN %(s6)s AND product != 'Barter'
                             GROUP BY 1, 2),
 
                             t2 AS (
@@ -220,7 +220,7 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
                             month,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s AND vertical IN %(s6)s
+                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s AND vertical IN %(s6)s AND product != 'Barter'
                             GROUP BY 1, 2)
 
                             SELECT *
@@ -235,7 +235,7 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
                             SELECT day,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s AND vertical IN %(s6)s
+                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s AND vertical IN %(s6)s AND product != 'Barter'
                             GROUP BY 1
                             ''',
                                  conn, params={'s1': sqltodayday, 's2': sqlthismonth, 's3': sqlthismonthyear, 's6': tuple(team_name)})
@@ -244,7 +244,7 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
                             SELECT day,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s AND vertical IN %(s6)s
+                            WHERE day <= %(s1)s AND month = %(s4)s AND year = %(s5)s AND vertical IN %(s6)s AND product != 'Barter'
                             GROUP BY 1
                             ''',
                                      conn, params={'s1': sqltodayday, 's4': sqllastmonth, 's5': sqllastmonthyear, 's6': tuple(team_name)})
@@ -288,7 +288,7 @@ def ytd(conn, today1, daysleft, team_name=None):
                         SELECT date,
                         SUM("rev$") Rev$
                         FROM datatable
-                        WHERE year = %(s3)s AND vertical IN  %(s6)s
+                        WHERE year = %(s3)s AND vertical IN  %(s6)s AND product != 'Barter'
                         GROUP BY 1
                         ''',
                                    conn, params={'s3': sqlthismonthyear, 's6': tuple(team_name)})
@@ -840,139 +840,97 @@ def weekly_new_old_merch(conn, merlist, year):
 
 # budget performance
 
-def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat, team_parameter, team_merch):
-    if 'All' in team_name:
-        if 'All' in team_merch:
-            q = f'''
-                SELECT product,
-                year,
-                merchants,
-                classification,
-                category,
-                month,
-                quarter,
-                COALESCE(SUM("rev$"),0) rev$
-                FROM datatable
-                WHERE year = %(s2)s AND
-                classification IN %(s3)s AND
-                category IN %(s4)s AND
-                month IN %(s5)s AND
-                quarter IN %(s6)s
-                GROUP BY 1,2,3,4,5,6,7
-                ORDER BY 8 DESC
-                '''
-            dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(team_class), 's4': tuple(team_cat), 's5': tuple(
-                range(team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1))})
-            dfmain.columns = [
-                'Product', 'Year', 'Merchants', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
-            dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
-                ["Rev$"]].sum()
-            dfteamrev1 = dfteamrev1.sort_values(
-                by='Rev$', ascending=False).reset_index()
-        elif 'All' not in team_merch:
-            q = f'''
-                SELECT product,
-                year,
-                merchants,
-                classification,
-                category,
-                month,
-                quarter,
-                COALESCE(SUM("rev$"),0) rev$
-                FROM datatable
-                WHERE year = %(s2)s AND
-                classification IN %(s3)s AND
-                category IN %(s4)s AND
-                month IN %(s5)s AND
-                quarter IN %(s6)s AND
-                merchants IN %(s7)s
-                GROUP BY 1,2,3,4,5,6,7
-                ORDER BY 8 DESC
-                '''
-            dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(team_class), 's4': tuple(team_cat), 's5': tuple(range(
-                team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1)), 's7': tuple(team_merch)})
-            dfmain.columns = [
-                'Product', 'Year', 'Merchants', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
-            dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
-                ["Rev$"]].sum()
-            dfteamrev1 = dfteamrev1.sort_values(
-                by='Rev$', ascending=False).reset_index()
+def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat, team_prod, team_parameter, team_merch, team_curr, team_metrics):
+    q1 = f'''SELECT product, year, merchants, classification, category, month, quarter, COALESCE(SUM("{team_metrics.lower()}"),0) FROM datatable WHERE year = %(s2)s AND '''
+    q2 = ''
+    q3 = f''' month IN %(s8)s AND quarter IN %(s9)s AND product != 'Barter' AND merchants != 'Barter' GROUP BY 1,2,3,4,5,6,7 ORDER BY 8 DESC '''
 
-    elif 'All' not in team_name:
-        if 'All' in team_merch:
-            q = f'''
-                SELECT product,
-                year,
-                merchants,
-                classification,
-                category,
-                month,
-                quarter,
-                COALESCE(SUM("rev$"),0) rev$
-                FROM datatable
-                WHERE year = %(s2)s AND
-                classification IN %(s3)s AND
-                category IN %(s4)s AND
-                month IN %(s5)s AND
-                quarter IN %(s6)s AND
-                vertical IN %(s7)s
-                GROUP BY 1,2,3,4,5,6,7
-                ORDER BY 8 DESC
-                '''
-            dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(team_class), 's4': tuple(team_cat), 's5': tuple(
-                range(team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1)), 's7': tuple(team_name)})
-            dfmain.columns = [
-                'Product', 'Year', 'Merchants', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
-            dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
-                ["Rev$"]].sum()
-            dfteamrev1 = dfteamrev1.sort_values(
-                by='Rev$', ascending=False).reset_index()
-        elif 'All' not in team_merch:
-            q = f'''
-                SELECT product,
-                year,
-                merchants,
-                classification,
-                category,
-                month,
-                quarter,
-                COALESCE(SUM("rev$"),0) rev$
-                FROM datatable
-                WHERE year = %(s2)s AND
-                classification IN %(s3)s AND
-                category IN %(s4)s AND
-                month IN %(s5)s AND
-                quarter IN %(s6)s AND
-                merchants IN %(s7)s AND
-                vertical IN %(s8)s
-                GROUP BY 1,2,3,4,5,6,7
-                ORDER BY 8 DESC
-                '''
-            dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(team_class), 's4': tuple(team_cat), 's5': tuple(range(
-                team_month[0], team_month[1]+1, 1)), 's6': tuple(range(team_quar[0], team_quar[1]+1, 1)), 's7': tuple(team_merch), 's8': tuple(team_name)})
-            dfmain.columns = [
-                'Product', 'Year', 'Merchants', 'Classification', 'Category', 'Month', 'Quarter', 'Rev$']
-            dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
-                ["Rev$"]].sum()
-            dfteamrev1 = dfteamrev1.sort_values(
-                by='Rev$', ascending=False).reset_index()
+    if 'All' not in team_name:
+        q2 += f''' vertical IN %(s7)s AND '''
+    elif 'All' not in team_class:
+        q2 += f''' classification IN %(s3)s AND '''
+    elif 'All' not in team_cat:
+        q2 += f''' category IN %(s4)s AND '''
+    elif 'All' not in team_prod:
+        q2 += f''' product IN %(s5)s AND '''
+    elif 'All' not in team_merch:
+        q2 += f''' merchants IN %(s6)s AND '''
     else:
-        st.warning('wrong input')
+        pass
+
+    q = q1 + q2 + q3
+
+    dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(team_class), 's4': tuple(team_cat), 's5': tuple(team_prod), 's6': tuple(
+        team_merch), 's7': tuple(team_name), 's8': tuple(range(team_month[0], team_month[1]+1, 1)), 's9': tuple(range(team_quar[0], team_quar[1]+1, 1))})
+    dfmain.columns = ['Product', 'Year', 'Merchants',
+                      'Classification', 'Category', 'Month', 'Quarter', team_metrics]
+    dfteamrev1 = dfmain[dfmain.Product != 'Barter'].groupby(team_parameter)[
+        [team_metrics]].sum()
+    dfteamrev1 = dfteamrev1.sort_values(
+        by=team_metrics, ascending=False).reset_index()
+
     return dfteamrev1
 
 
-def team_daily(conn, today1, year, team_name):
+def team_dailybrkdwn(conn, vertoday1, year, metrics, curr, merch, prod, team_name):
+    veryestday1 = vertoday1 - datetime.timedelta(days=1)
+    vertoday = vertoday1.strftime('%Y-%m-%d')
+    veryestday = veryestday1.strftime('%Y-%m-%d')
+    vertoday2 = vertoday1.strftime('%d-%m-%Y')
+    veryestday2 = veryestday1.strftime('%d-%m-%Y')
+    daterange = [veryestday, vertoday]
+    q1 = f'''SELECT merchants, product, currency, date, COALESCE(SUM("{metrics.lower()}"),0) FROM datatable WHERE year = %(s2)s AND '''
+    q2 = ''
+    q3 = f''' date IN %(s7)s AND product != 'Barter' AND merchants != 'Barter' GROUP BY 1,2,3,4 ORDER BY 5 DESC '''
+
+    if 'All' not in curr:
+        q2 += f''' currency IN %(s3)s AND '''
+    elif 'All' not in prod:
+        q2 += f''' product IN %(s4)s AND '''
+    elif 'All' not in merch:
+        q2 += f''' merchants IN %(s5)s AND '''
+    elif 'All' not in team_name:
+        q2 += f''' vertical IN %(s6)s AND '''
+    q = q1 + q2 + q3
+    dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(curr), 's4': tuple(
+        prod), 's5': tuple(merch), 's6': tuple(team_name), 's7': tuple(daterange)})
+
+    dfmain.columns = ['Merchants', 'Product', 'Currency', 'Date', metrics]
+
+    dfmain['Date'] = dfmain['Date'].map(lambda x: x.strftime('%d-%m-%Y'))
+
+    try:
+
+        dfmain = pd.pivot_table(dfmain, index=['Merchants', 'Product', 'Currency'], columns=[
+                                'Date'], values=[metrics], fill_value=0).reset_index()
+
+        dfmain['Variance'] = dfmain[(metrics, vertoday2)] - \
+            dfmain[(metrics, veryestday2)]
+
+        dfmain = dfmain.sort_values(
+            dfmain.columns.tolist()[-1], ascending=False)
+
+        dfmain = dfmain.reset_index(drop=True)
+
+    except:
+        pass
+
+    return dfmain
+
+
+def team_daily(conn, today1, year, team_name, team_metrics):
     lastweekday = today1 - datetime.timedelta(days=6)
     lastweekday = lastweekday.strftime('%Y-%m-%d')
     if 'All' in team_name:
         q = f'''
                 SELECT merchants,
                 date,
-                COALESCE(SUM("rev$"),0) rev$
+                COALESCE(SUM("{team_metrics.lower()}"),0)
                 FROM datatable
                 WHERE year = %(s2)s AND
                 date >=  %(s3)s AND
-                product != 'Barter'
+                product != 'Barter' AND
+                merchants != 'Barter' 
                 GROUP BY 1,2
                 ORDER BY 3 DESC
                     '''
@@ -982,27 +940,28 @@ def team_daily(conn, today1, year, team_name):
         q = f'''
                 SELECT merchants,
                 date,
-                COALESCE(SUM("rev$"),0) rev$
+                COALESCE(SUM("{team_metrics.lower()}"),0)
                 FROM datatable
                 WHERE year = %(s2)s AND
                 vertical IN %(s3)s AND
                 date >= %(s4)s AND
-                product != 'Barter' 
+                product != 'Barter' AND
+                merchants != 'Barter'
                 GROUP BY 1,2
                 ORDER BY 3 DESC
                     '''
         dfmain = psql.read_sql(
             q, conn, params={'s2': year, 's3': tuple(team_name), 's4': lastweekday})
-    dfmain.columns = ['Merchants', 'Date', 'Rev$']
+    dfmain.columns = ['Merchants', 'Date', team_metrics]
     dfmain['Date'] = dfmain['Date'].map(lambda x: x.strftime('%d-%m-%Y'))
     dfmain = pd.pivot_table(dfmain, index='Merchants', columns='Date', values=[
-                            'Rev$'], aggfunc='sum', fill_value=0).reset_index()
+                            team_metrics], aggfunc='sum', fill_value=0).reset_index()
     dfmain = dfmain.sort_values(
         by=dfmain.columns.tolist()[-1], ascending=False).reset_index(drop=True)
     return dfmain
 
 
-def team_weekly(conn, today1, thisweek, year, team_name):
+def team_weekly(conn, today1, thisweek, year, team_name, team_metrics):
     if thisweek < 5:
         startweek = 1
     else:
@@ -1011,10 +970,11 @@ def team_weekly(conn, today1, thisweek, year, team_name):
         q = f'''
                 SELECT merchants,
                 week,
-                COALESCE(SUM("rev$"),0) rev$
+                COALESCE(SUM("{team_metrics.lower()}"),0)
                 FROM datatable
                 WHERE year = %(s2)s AND
                 product != 'Barter' AND
+                merchants != 'Barter' AND
                 week >= %(s3)s
                 GROUP BY 1,2
                 ORDER BY 3 DESC
@@ -1025,11 +985,12 @@ def team_weekly(conn, today1, thisweek, year, team_name):
         q = f'''
                 SELECT merchants,
                 week,
-                COALESCE(SUM("rev$"),0) rev$
+                COALESCE(SUM("{team_metrics.lower()}"),0)
                 FROM datatable
                 WHERE year = %(s2)s AND
                 vertical IN %(s3)s AND
                 product != 'Barter' AND
+                merchants != 'Barter' AND
                 week >= %(s4)s
                 GROUP BY 1,2
                 ORDER BY 3 DESC
@@ -1037,9 +998,9 @@ def team_weekly(conn, today1, thisweek, year, team_name):
         dfmain = psql.read_sql(
             q, conn, params={'s2': year, 's3': tuple(team_name), 's4': startweek})
 
-    dfmain.columns = ['Merchants', 'Week', 'Rev$']
+    dfmain.columns = ['Merchants', 'Week', team_metrics]
     dfmain = pd.pivot_table(dfmain, index='Merchants', columns='Week', values=[
-                            'Rev$'], aggfunc='sum', fill_value=0).reset_index()
+                            team_metrics], aggfunc='sum', fill_value=0).reset_index()
     dfmain = dfmain.sort_values(
         by=dfmain.columns.tolist()[-1], ascending=False).reset_index(drop=True)
     return dfmain
@@ -1122,57 +1083,33 @@ def process_pipeline(dfpip, team_name):
 
 # Account Management Report Functions
 
-def gainers_losers(conn, year, lastweekyear, thismonth, team_name):
-    if thismonth < 6:
-        dfmain = psql.read_sql('''
-                        SELECT merchname2,
-                        year,
-                        month,
-                        vertical,
-                        COALESCE(SUM("rev$"),0) rev$
-                        FROM datatable
-                        WHERE year IN %(s2)s AND
-                        vertical IN %(s3)s
-                        GROUP BY 1,2,3,4
-                        ORDER BY 5 DESC
-                        ''',
-                               conn, params={'s2': tuple(
-                                   [year-1, year]), 's3': tuple(['Ent & NFIs'])}
-                               )
+def gainers_losers(conn, year, lastweekyear, thismonth, team_name, acct_curr, acct_prod, acct_merch, acct_metrics, all_team):
 
+    if thismonth < 6:
+        yearrangelist = tuple([year-1, year])
     else:
-        dfmain = psql.read_sql('''
-                        SELECT merchname2,
-                        year,
-                        month,
-                        vertical,
-                        COALESCE(SUM("rev$"),0) rev$
-                        FROM datatable
-                        WHERE year IN %(s2)s AND
-                        vertical IN %(s3)s
-                        GROUP BY 1,2,3,4
-                        ORDER BY 5 DESC
-                        ''',
-                               conn, params={'s2': tuple(
-                                   [year]), 's3': tuple(['Ent & NFIs'])}
-                               )
-    dfmain.columns = ['MerchName2', 'Year', 'Month', 'Vertical', 'Rev$']
-    if 'All' in team_name:
-        dfxx = pd.pivot_table(dfmain,
-                              index='MerchName2',
-                              values='Rev$',
-                              columns=['Year', 'Month'],
-                              fill_value=0,
-                              aggfunc=np.sum,
-                              )
-    else:
-        dfxx = pd.pivot_table(dfmain[dfmain.Vertical.isin(team_name)],
-                              index='MerchName2',
-                              values='Rev$',
-                              columns=['Year', 'Month'],
-                              fill_value=0,
-                              aggfunc=np.sum,
-                              )
+        yearrangelist = tuple([lastweekyear, year])
+
+    q1 = f'''SELECT merchname2, year, month, COALESCE(SUM("{acct_metrics.lower()}"),0) FROM datatable WHERE year IN %(s2)s AND '''
+    q2 = ''
+    q3 = f''' vertical IN %(s7)s AND product != 'Barter' AND merchants != 'Barter' GROUP BY 1,2,3 ORDER BY 4 DESC '''
+
+    if 'All' not in acct_curr:
+        q2 += f''' currency IN %(s3)s AND '''
+    elif 'All' not in acct_prod:
+        q2 += f''' product IN %(s4)s AND '''
+    elif 'All' not in acct_merch:
+        q2 += f''' merchants IN %(s5)s AND '''
+    elif 'All' not in team_name:
+        q2 += f''' vertical IN %(s6)s AND '''
+
+    q = q1 + q2 + q3
+    dfmain = psql.read_sql(q, conn, params={'s2': yearrangelist, 's3': tuple(acct_curr), 's4': tuple(
+        acct_prod), 's5': tuple(acct_merch), 's6': tuple(team_name), 's7': tuple(all_team)})
+    dfmain.columns = ['MerchName2', 'Year', 'Month', acct_metrics]
+    dfxx = pd.pivot_table(dfmain, index='MerchName2', values=acct_metrics, columns=[
+        'Year', 'Month'], fill_value=0, aggfunc=np.sum)
+
     dfxx = dfxx.sort_values((year, thismonth), ascending=False).reset_index()
     dfxx.rename(columns={'MerchName2': 'Merchants'}, inplace=True)
     j = 3
@@ -1208,43 +1145,6 @@ def gainers_losers(conn, year, lastweekyear, thismonth, team_name):
     dfxxloss = dfxx[dfxx['Variance'] < 0].sort_values(
         'Variance', ascending=True).reset_index(drop=True)
     return dfxxgain, dfxxloss
-
-
-def accmer_monthrev(conn, year, team_name, accmer_selected):
-    if 'All' in accmer_selected:
-        dfaccmerraw = psql.read_sql('''
-                            SELECT merchname2,
-                            month,
-                            COALESCE(SUM("rev$"),0) rev$
-                            FROM datatable
-                            WHERE year IN %(s2)s
-                            AND vertical IN %(s3)s
-                            GROUP BY 1,2
-                            ORDER BY 3 DESC
-                            ''',
-                                    conn, params={'s2': tuple(
-                                        [year]), 's3': tuple(team_name)}
-                                    )
-    else:
-        dfaccmerraw = psql.read_sql('''
-                            SELECT merchname2,
-                            month,
-                            COALESCE(SUM("rev$"),0) rev$
-                            FROM datatable
-                            WHERE year IN %(s2)s AND
-                            merchname2 IN %(s4)s AND
-                            vertical IN  %(s3)s
-                            GROUP BY 1,2
-                            ORDER BY 3 DESC
-                            ''',
-                                    conn, params={'s2': tuple(
-                                        [year]), 's3': tuple(team_name), 's4': tuple(accmer_selected)}
-                                    )
-    dfaccmerraw.columns = ['MerchName2', 'Month', 'Rev$']
-    dfaccmer = dfaccmerraw.groupby(['Month'])[
-        ['Rev$']].sum().reset_index()
-
-    return dfaccmer
 
 
 # SME Report Functions

@@ -147,20 +147,7 @@ elif choice == 'Login':
                                'Account Management Report', 'Budget Performance Report', 'Pipeline Performance Report', 'User Profiles']
                 else:
                     reports = ['Daily Report', 'Weekly Report', 'SME Report', 'Barter Report',
-                               'Budget Performance Report', 'Pipeline Performance Report', 'Account Management Report']
-
-                teams = ['Commercial', 'Acct Mgt'] + \
-                    psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL''',
-                                  conn).vertical.tolist()
-
-                # Query to get the list of merchants from the database
-                all_mer = ['All'] + \
-                    psql.read_sql('SELECT DISTINCT merchants FROM datatable',
-                                  conn).merchants.tolist()
-
-                # Query to get the list of verticals from the database
-                all_team = [
-                    'All']+psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL ''', conn).vertical.tolist()
+                               'Pipeline Performance Report', 'Budget Performance Report',  'Account Management Report']
 
                 today1, today, todaystr = today_dates(c)
 
@@ -174,7 +161,20 @@ elif choice == 'Login':
                 year, numofdays, lastnumofdays, daysinyr, daysleft = year_dates(
                     today1)
 
+                teams = ['Commercial', 'Acct Mgt'] + \
+                    psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL''',
+                                  conn).vertical.tolist()
+
                 if result[0][2] == 'Commercial':
+                    # Query to get the list of merchants from the database
+                    all_mer = ['All'] + \
+                        psql.read_sql('SELECT DISTINCT merchants FROM datatable WHERE year = %(s1)s',
+                                      conn, params={'s1': year}).merchants.tolist()
+
+                    # Query to get the list of verticals from the database
+                    all_team = [
+                        'All']+psql.read_sql('''SELECT DISTINCT vertical FROM datatable WHERE vertical != 'None' AND vertical IS NOT NULL ''', conn).vertical.tolist()
+
                     report = st.sidebar.radio('Navigation', reports)
                     st.sidebar.markdown("---")
                     dfsum = df_sum(conn, today1, yesterday1,
@@ -215,12 +215,12 @@ elif choice == 'Login':
                     elif report == 'Budget Performance Report':
 
                         budget_performance_report(
-                            conn, result, today1, thisweek, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer, all_team)
+                            c, conn, result, today1, thisweek, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate)
 
                     elif report == 'Account Management Report':
 
                         acct_mgt_report(c, conn, result, today1,
-                                        thismonth, year, lastweekyear, all_team)
+                                        thismonth, year, lastweekyear)
 
                     elif report == 'Pipeline Performance Report':
 
@@ -232,22 +232,26 @@ elif choice == 'Login':
 
                 elif result[0][2] == 'Acct Mgt':
 
-                    report = st.sidebar.radio('Navigation', reports[6:])
+                    report = st.sidebar.radio('Navigation', reports[5:])
 
                     if report == 'Account Management Report':
 
                         acct_mgt_report(c, conn, result, today1,
-                                        thismonth, year, lastweekyear, all_team)
+                                        thismonth, year, lastweekyear)
+
+                    elif report == 'Budget Performance Report':
+
+                        budget_performance_report(
+                            c, conn, result, today1, thisweek, thismonth, month, 0, 0, year, 0, 0, 0, 0)
 
                 elif result[0][2] in teams:
                     email == result[0][1].lower()
                     report = st.sidebar.radio('Navigation', reports[4:6])
-                    team_name = result[0][2]
-                    team_name = [team_name]
+                    team_name = [result[0][2]]
 
                     all_mer = ['All'] + \
-                        psql.read_sql('''SELECT DISTINCT merchants FROM datatable WHERE vertical IN %(s6)s''',
-                                      conn, params={'s6': tuple(team_name)}).merchants.tolist()
+                        psql.read_sql('''SELECT DISTINCT merchants FROM datatable WHERE vertical IN %(s1)s AND year = %(s2)s  ''',
+                                      conn, params={'s1': tuple(team_name), 's2': year}).merchants.tolist()
 
                     if report == 'Budget Performance Report':
                         try:
@@ -280,10 +284,11 @@ elif choice == 'Login':
                                     c, team_name, yeartarget2=yeartarget2)
 
                         budget_performance_report(
-                            conn, result, today1, thisweek, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate, all_mer)
+                            c, conn, result, today1, thisweek, thismonth, month, monthtarget, mtdsumthis, year, yeartarget, ytdsum, runrate, fyrunrate)
 
                     elif report == 'Pipeline Performance Report':
                         pipeline_report(c, result)
+
         else:
             if password1:
                 st.warning('Please Enter valid Credentials or Sign up')

@@ -196,12 +196,12 @@ def weekly_report_graphs(year, thisweek, lastweek, dfweeksum, dfweeklastyr, dfwe
 
 # Vertical Budget Performance
 
-def vertical_budget_graphs(dfteamrev_prod, dfteamrev_month):
+def vertical_budget_graphs(dfteamrev_prod, dfteamrev_month, team_metrics):
     verticalprorevfig = go.Figure(data=[
         go.Bar(x=dfteamrev_prod.iloc[:, 1].values.tolist(), y=dfteamrev_prod.iloc[:, 0].values.tolist(), marker_color='#4169e1', orientation='h',
                text=dfteamrev_prod.iloc[:, 1].values.tolist(), textfont_color="white", texttemplate='%{text:.2s}', textposition='inside')
     ])
-    verticalprorevfig.update_layout(title='Revenue By Product', xaxis=dict(title='Revenue ($)'), yaxis=dict(title='Product', autorange="reversed"),
+    verticalprorevfig.update_layout(title=f'{team_metrics.title()} By Product', xaxis=dict(title=f'{team_metrics.title()}'), yaxis=dict(title='Product', autorange="reversed"),
                                     autosize=True, width=600, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
     verticalprorevfig.update_yaxes(type='category')
@@ -212,8 +212,8 @@ def vertical_budget_graphs(dfteamrev_prod, dfteamrev_month):
                text=dfteamrev_month.iloc[:, 1].values.tolist(), textfont_color="white", texttemplate='%{text:.2s}', textposition='inside')
     ])
 
-    verticalmonrevfig.update_layout(title='Revenue By Month', xaxis=dict(tickmode='linear', dtick=1),
-                                    yaxis=dict(gridcolor='#C0C0C0'), autosize=True, width=1150, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    verticalmonrevfig.update_layout(title=f'{team_metrics.title()} By Month', xaxis=dict(tickmode='linear', dtick=1),
+                                    yaxis=dict(gridcolor='#C0C0C0'), autosize=True, width=1000, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
     return verticalprorevfig, verticalmonrevfig
 
