@@ -844,8 +844,10 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
     q2 = ''
     q3 = f''' month IN %(s8)s AND quarter IN %(s9)s AND product != 'Barter' AND merchants != 'Barter' GROUP BY 1,2,3,4,5,6,7 ORDER BY 8 DESC '''
 
-    if 'All' not in team_name:
-        q2 += f''' vertical IN %(s7)s AND '''
+    if 'All' in team_name:
+        q2 += f''' vertical IN ('IMTO','PSP','Ent & NFIs') AND '''
+    elif 'All' not in team_name:
+        q2 += f''' vertical IN %(s7)s AND'''
     elif 'All' not in team_class:
         q2 += f''' classification IN %(s3)s AND '''
     elif 'All' not in team_cat:
@@ -888,8 +890,11 @@ def team_dailybrkdwn(conn, vertoday1, year, metrics, curr, merch, prod, team_nam
         q2 += f''' product IN %(s4)s AND '''
     elif 'All' not in merch:
         q2 += f''' merchants IN %(s5)s AND '''
+    elif 'All' in team_name:
+        q2 += f''' vertical IN ('IMTO','PSP','Ent & NFIs') AND '''
     elif 'All' not in team_name:
-        q2 += f''' vertical IN %(s6)s AND '''
+        q2 += f''' vertical IN %(s6)s AND'''
+
     q = q1 + q2 + q3
     dfmain = psql.read_sql(q, conn, params={'s2': year, 's3': tuple(curr), 's4': tuple(
         prod), 's5': tuple(merch), 's6': tuple(team_name), 's7': tuple(daterange)})
@@ -928,6 +933,7 @@ def team_daily(conn, today1, year, team_name, team_metrics):
                 FROM datatable
                 WHERE year = %(s2)s AND
                 date >=  %(s3)s AND
+                vertical IN ('IMTO','PSP','Ent & NFIs') AND
                 product != 'Barter' AND
                 merchants != 'Barter' 
                 GROUP BY 1,2
@@ -972,6 +978,7 @@ def team_weekly(conn, today1, thisweek, year, team_name, team_metrics):
                 COALESCE(SUM("{team_metrics.lower()}"),0)
                 FROM datatable
                 WHERE year = %(s2)s AND
+                vertical IN ('IMTO','PSP','Ent & NFIs') AND
                 product != 'Barter' AND
                 merchants != 'Barter' AND
                 week >= %(s3)s
