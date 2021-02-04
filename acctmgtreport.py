@@ -1,23 +1,28 @@
 import streamlit as st
-from utils import gainers_losers, get_table_download_link
-from graphs import table_fig, acct_mgt_graphs
-from db import view_notes, edit_notes
 import pandas.io.sql as psql
+import datetime
+from utils import team_rev, get_table_download_link, team_daily, team_weekly, team_dailybrkdwn
+from db import edit_vertargetable, get_vertarget
+from graphs import vertical_budget_graphs, table_fig, card_indicators
 
 
-def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear):
+def acct_mgt_report(c, conn, result, today1, thisweek, thismonth, month, year):
 
     st.subheader(
-        f'Account Management - Welcome {result[0][1].title().split("@")[0]}')
+        f'Account Management Report - Welcome {result[0][1].title().split("@")[0]}')
+
     st.markdown("---")
 
-    all_team = ['All']+psql.read_sql(
-        '''SELECT DISTINCT vertical FROM datatable WHERE vertical NOT IN ('None','SME & SMB','Betting/Gaming','Agency','Barter') AND vertical IS NOT NULL ''', conn).vertical.tolist()
+    col1, col2, col3, col4 = st.beta_columns(4)
 
-    col1t, col2t, col3t, col4t, col5t = st.beta_columns(5)
+    col1t, col3t, col2t, col4t = st.beta_columns(
+        [1, 0.5, 5.5, 0.5])
+
+    all_team = ['All']+psql.read_sql(
+        '''SELECT DISTINCT vertical FROM datatable WHERE vertical IN ('IMTO','PSP','Ent & NFIs') ''', conn).vertical.tolist()
 
     team_name = col1t.multiselect(
-        'Select Vertical', all_team, ['All'], key='acctmgt')
+        'Select Vertical', all_team, ['All'], key='commercial')
 
     if not team_name:
         team_name = ['All']
@@ -37,67 +42,144 @@ def acct_mgt_report(c, conn, result, today1, thismonth, year, lastweekyear):
             psql.read_sql('SELECT DISTINCT currency FROM datatable WHERE year = %(s1)s AND vertical IN %(s2)s',
                           conn, params={'s1': year, 's2': tuple(team_name)}).currency.tolist()
 
-    all_prod = ['All', 'Collections', 'Payouts', 'Others']
+        col1t.markdown('---')
 
-    acct_prod = col2t.multiselect(
-        'Search Products..', all_prod, default=['All'])
+    all_prod = ['Collections', 'Payouts', 'Others', 'All']
 
-    if not acct_prod:
-        acct_prod = ['All']
+    team_month = col1t.slider(
+        'Select Month..', min_value=1, max_value=12, step=1, value=(1, 12))
+    col1t.markdown('---')
 
-    acct_merch = col3t.multiselect(
-        'Search Merchants..', all_mer, default=['All'])
+    team_quar = col1t.slider(
+        'Select Quarter..', min_value=1, max_value=4, step=1, value=(1, 4))
 
-    if not acct_merch:
-        acct_merch = ['All']
+    col1ta, col3ta, col2ta, col4ta, col5ta, col6ta = st.beta_columns(
+        [1, 0.15, 3, 0.15, 3, 0.25])
 
-    acct_curr = col4t.multiselect(
+    team_curr = col1ta.multiselect(
         'Search Currency..', all_curr, default=['All'])
 
-    if not acct_curr:
-        acct_curr = ['All']
+    col1ta.markdown('---')
 
-    acct_metrics = col5t.radio(
+    if not team_curr:
+        team_curr = ['All']
+
+    team_metrics = col1ta.radio(
         'Select Metrics', ['Rev$', 'TPV$', 'TPC'], key='vertical1')
+    col1ta.markdown('---')
 
-    dfxxgain, dfxxloss = gainers_losers(
-        conn, year, lastweekyear, thismonth, team_name, acct_curr, acct_prod, acct_merch, acct_metrics, all_team)
+    team_prod = col1ta.multiselect(
+        'Search Products..', all_prod, default=['All'])
+
+    if not team_prod:
+        team_prod = ['All']
+
+    col1ta.markdown('---')
+
+    col1tb, col3tb, col2tb, col4tb = st.beta_columns(
+        [1, 0.5, 5.5, 0.25])
+
+    team_merch = col1tb.multiselect(
+        'Search Merchants..', all_mer, default=['All'])
+
+    if not team_merch:
+        team_merch = ['All']
+
+    col1tb.markdown('---')
+
+    team_class = col1tb.multiselect('Select Classification..', [
+        'Large', 'Medium', 'Small'], default=['Large', 'Medium', 'Small'])
+    col1tb.markdown('---')
+
+    if not team_class:
+        team_class = ['Large', 'Medium', 'Small']
+
+    if 'SME & SMB' in team_name:
+        team_cat = ['SMB']
+    else:
+        team_cat = col1tb.multiselect(
+            'Select Category..', ['Enterprise', 'SMB'], default=['Enterprise', 'SMB'])
+        if not team_cat:
+            team_cat = ['Enterprise', 'SMB']
+
+    dfteamrev_month = team_rev(conn, year, team_name, team_month, team_quar,
+                               team_class, team_cat, team_prod, 'Month', team_merch, team_curr, team_metrics)
+
+    dfteamrev_prod = team_rev(conn, year, team_name, team_month, team_quar, team_class,
+                              team_cat, team_prod, 'Product', team_merch, team_curr, team_metrics)
+
+    dfteamrev_merch = team_rev(conn, year, team_name, team_month, team_quar, team_class,
+                               team_cat, team_prod, 'Merchants', team_merch, team_curr, team_metrics)
+
+    verticalprorevfig, verticalmonrevfig = vertical_budget_graphs(
+        dfteamrev_prod, dfteamrev_month, team_metrics)
+
+    col2t.plotly_chart(verticalmonrevfig)
+
+    col2ta.plotly_chart(verticalprorevfig)
+
+    dfteamrev_merchfig = table_fig(
+        dfteamrev_merch, title=f'{team_metrics} by Merchants', wide=550, long=450)
+
+    col5ta.plotly_chart(dfteamrev_merchfig)
+
+    col5ta.markdown(get_table_download_link(
+        dfteamrev_merch, 'Revenue by Merchants Table'), unsafe_allow_html=True)
+
+    dfteamdaily = team_daily(conn, today1, year, team_name, team_metrics)
+
+    dfteamdailyfig = table_fig(
+        dfteamdaily, title='Revenue by Merchants DoD', wide=1250)
+    st.plotly_chart(dfteamdailyfig)
+    st.markdown(get_table_download_link(
+        dfteamdaily, 'Daily Revenue Of Merchants Table'), unsafe_allow_html=True)
+
+    dfteamweekly = team_weekly(
+        conn, today1, thisweek, year, team_name, team_metrics)
+
+    dfteamweeklyfig = table_fig(
+        dfteamweekly, title='Revenue by Merchants WoW', wide=1000)
+
+    col2tb.plotly_chart(dfteamweeklyfig)
+
+    col2tb.markdown(get_table_download_link(
+        dfteamweekly, 'Weekly Revenue Of Merchants Table'), unsafe_allow_html=True)
 
     st.markdown('---')
 
-    try:
-        st.write(
-            f'{view_notes(c,today1,"AccMgtGain")[0][1].strftime("%d-%B-%Y")} Notes:  \n  \n {view_notes(c,today1,"AccMgtGain")[0][2]}')
-    except Exception:
-        st.warning(f'No notes for {today1}')
+    col1, col2, col3, col4, col5 = st.beta_columns([1, 2, 1, 1, 1])
 
-    if result[0][4]:
-        with st.beta_expander("Enter Gainers Summary Note Here"):
-            gainersnote = st.text_area(
-                f'Enter gainers note for {today1.strftime("%d-%B-%Y")}')
-            edit_notes(c, today1, gainersnote, "AccMgtGain")
+    c.execute('''SELECT MAX(Date) FROM datatable''')
+    latestdate = c.fetchone()[0]
 
-    gainfig = table_fig(
-        dfxxgain, title=f'Gainers By {acct_metrics}', wide=1315)
-    st.plotly_chart(gainfig)
+    vertoday1 = col1.date_input('Date', latestdate, min_value=datetime.datetime(
+        datetime.datetime.now().year, 1, 1), max_value=latestdate, key='vertical')
+
+    metrics = col5.radio('Select Metrics', ['Rev$', 'TPV$', 'TPC'])
+
+    merch = col2.multiselect(
+        'Search Merchants..', all_mer, default=['All'], key='vertical2')
+
+    if not merch:
+        merch = ['All']
+
+    prod = col3.multiselect(
+        'Search Product..', all_prod, default=['All'], key='vertical2')
+
+    if not prod:
+        prod = ['All']
+
+    curr = col4.multiselect(
+        'Search Currency..', all_curr, default=['All'], key='vertical2')
+
+    if not curr:
+        curr = ['All']
+
+    dfverdaily = team_dailybrkdwn(
+        conn, vertoday1, year, metrics, curr, merch, prod, team_name)
+
+    dfverdailyfig = table_fig(
+        dfverdaily, title='Daily Revenue by Merchants, Product and Currency', wide=1250)
+    st.plotly_chart(dfverdailyfig)
     st.markdown(get_table_download_link(
-        dfxxgain, f'Gainers By {acct_metrics} Table'), unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    try:
-        st.write(
-            f'{view_notes(c,today1,"AccMgtLoss")[0][1].strftime("%d-%B-%Y")} Notes:  \n  \n {view_notes(c,today1,"AccMgtLoss")[0][2]}')
-    except Exception:
-        st.warning(f'No notes for {today1}')
-
-    if result[0][4]:
-        with st.beta_expander("Enter Losers Summary Note Here"):
-            losersnote = st.text_area(
-                f'Enter losers note for {today1.strftime("%d-%B-%Y")}')
-            edit_notes(c, today1, losersnote, "AccMgtLoss")
-
-    lossfig = table_fig(dfxxloss, title=f'Losers By {acct_metrics}', wide=1315)
-    st.plotly_chart(lossfig)
-    st.markdown(get_table_download_link(
-        dfxxloss, f'Losers By {acct_metrics} Table'), unsafe_allow_html=True)
+        dfverdaily, 'Daily Revenue by Merchants, Product and Currency'), unsafe_allow_html=True)

@@ -35,7 +35,7 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse
 
 load_dotenv()
-img = Image.open('flutterwavelogo2.png')
+
 
 st.set_page_config(page_title='Flutterwave Report App',
                    layout='wide', initial_sidebar_state='collapsed')
@@ -116,7 +116,8 @@ if choice == 'Home':
 
 
 elif choice == 'Login':
-    st.image(img, width=300)
+    st.image('https://drive.google.com/uc?id=1sJ9tIkT2sDZaMI7afm6jEHiSmXG17-ZC',
+             width=300, height=400)
     session_state = SessionState.get(checkboxed=False)
     st.sidebar.markdown("---")
     email = st.sidebar.text_input('Email')
@@ -220,7 +221,7 @@ elif choice == 'Login':
                     elif report == 'Account Management Report':
 
                         acct_mgt_report(c, conn, result, today1,
-                                        thismonth, year, lastweekyear)
+                                        thisweek, thismonth, month, year)
 
                     elif report == 'Pipeline Performance Report':
 
@@ -232,17 +233,17 @@ elif choice == 'Login':
 
                 elif result[0][2] == 'Acct Mgt':
 
-                    report = st.sidebar.radio('Navigation', reports[5:])
+                    report = st.sidebar.radio('Navigation', reports[6:])
 
                     if report == 'Account Management Report':
 
                         acct_mgt_report(c, conn, result, today1,
-                                        thismonth, year, lastweekyear)
+                                        thisweek, thismonth, month, year)
 
-                    elif report == 'Budget Performance Report':
+                    # elif report == 'Budget Performance Report':
 
-                        budget_performance_report(
-                            c, conn, result, today1, thisweek, thismonth, month, 0, 0, year, 0, 0, 0, 0)
+                    #    budget_performance_report(
+                        # c, conn, result, today1, thisweek, thismonth, month, 0, 0, year, 0, 0, 0, 0)
 
                 elif result[0][2] in teams:
                     email == result[0][1].lower()

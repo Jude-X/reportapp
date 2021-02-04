@@ -169,7 +169,7 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
                             month,
                             SUM("rev$") Rev$
                             FROM datatable
-                            WHERE month = %(s2)s AND year = %(s3)s AND day <= %(s1)s
+                            WHERE day <= %(s1)s AND month = %(s2)s AND year = %(s3)s
                             GROUP BY 1, 2),
 
                             t2 AS (
@@ -252,12 +252,11 @@ def mtd(conn, today1, lastmonth, lastmonth1, numofdays, lastnumofdays, team_name
     dfsumrun.columns = dfsumrunlast.columns = ['Day', 'Rev$']
     dfmtd = dfmtd.pivot_table(
         index=['Product'], columns='Month', values='Rev$').reset_index()
+    dfmtd = dfmtd[['Product', sqllastmonth, sqlthismonth]]
     dfmtd['Variance'] = (dfmtd.iloc[:, -2] -
                          dfmtd.iloc[:, -1])/dfmtd.iloc[:, -1]
     dfmtd.columns = [
-        'Product', f'{today1.strftime("%B")[0:3]} MTD', f'{lastmonth[0:3]} MTD', 'Variance']
-    dfmtd = dfmtd[['Product', f'{lastmonth[0:3]} MTD',
-                   f'{today1.strftime("%B")[0:3]} MTD', 'Variance']]
+        'Product', f'{lastmonth[0:3]} MTD', f'{today1.strftime("%B")[0:3]} MTD', 'Variance']
     mtdsumthis = round(dfmtd[f'{today1.strftime("%B")[0:3]} MTD'].sum(), 2)
     mtdsumlast = round(dfmtd[f'{lastmonth[0:3]} MTD'].sum(), 2)
     dfsumrun['Avg1'] = dfsumrun['Rev$'].rolling(window=4).mean()
