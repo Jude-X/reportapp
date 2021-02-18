@@ -845,7 +845,7 @@ def team_rev(conn, year, team_name, team_month, team_quar, team_class, team_cat,
     q3 = f''' month IN %(s8)s AND quarter IN %(s9)s AND product != 'Barter' AND merchants != 'Barter' GROUP BY 1,2,3,4,5,6,7 ORDER BY 8 DESC '''
 
     if 'All' in team_name:
-        q2 += f''' vertical IN ('IMTO','PSP','Ent & NFIs') AND '''
+        q2 += f''' vertical IN ('IMTO','PSP','Tech & OFI') AND '''
     elif 'All' not in team_name:
         q2 += f''' vertical IN %(s7)s AND'''
     elif 'All' not in team_class:
@@ -891,7 +891,7 @@ def team_dailybrkdwn(conn, vertoday1, year, metrics, curr, merch, prod, team_nam
     elif 'All' not in merch:
         q2 += f''' merchants IN %(s5)s AND '''
     elif 'All' in team_name:
-        q2 += f''' vertical IN ('IMTO','PSP','Ent & NFIs') AND '''
+        q2 += f''' vertical IN ('IMTO','PSP','Tech & OFI') AND '''
     elif 'All' not in team_name:
         q2 += f''' vertical IN %(s6)s AND'''
 
@@ -933,7 +933,7 @@ def team_daily(conn, today1, year, team_name, team_metrics):
                 FROM datatable
                 WHERE year = %(s2)s AND
                 date >=  %(s3)s AND
-                vertical IN ('IMTO','PSP','Ent & NFIs') AND
+                vertical IN ('IMTO','PSP','Tech & OFI') AND
                 product != 'Barter' AND
                 merchants != 'Barter' 
                 GROUP BY 1,2
@@ -978,7 +978,7 @@ def team_weekly(conn, today1, thisweek, year, team_name, team_metrics):
                 COALESCE(SUM("{team_metrics.lower()}"),0)
                 FROM datatable
                 WHERE year = %(s2)s AND
-                vertical IN ('IMTO','PSP','Ent & NFIs') AND
+                vertical IN ('IMTO','PSP','Tech & OFI') AND
                 product != 'Barter' AND
                 merchants != 'Barter' AND
                 week >= %(s3)s

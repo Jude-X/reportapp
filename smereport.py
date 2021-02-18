@@ -12,7 +12,7 @@ def sme_report(conn, c, today1, thisweek, lastweek, year, lastweekyear):
     st.markdown('---')
 
     ver = ['Agency', 'Betting/Gaming',
-           'Ent & NFIs', 'FMCG', 'IMTO', 'None', 'PSP']
+           'Tech & OFI', 'FMCG', 'IMTO', 'None', 'PSP']
 
     subpro = ['Card Issuance', 'Card Maintenance',
               'Card Termination', 'Mvisa Qr Payment']

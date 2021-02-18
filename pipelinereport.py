@@ -11,7 +11,7 @@ def pipeline_report(c, result, all_team=None):
         st.warning(
             'Oops, It appears the server at www.googleapis.com is lost, try again later')
 
-    if result[0][2] in ['Commercial', 'Head AM']:
+    if result[0][2] in ['Commercial', 'Acct Mgt']:
         st.subheader(
             f'Pipeline Tracker - Welcome {result[0][1].title().split("@")[0]}')
 
@@ -19,7 +19,7 @@ def pipeline_report(c, result, all_team=None):
             team_name = st.multiselect(
                 'Select Vertical', all_team, ['All'], key='pipeline')
         else:
-            team_name = ['Ent & NFIs']
+            team_name = ['Tech & OFI']
     else:
         st.subheader(
             f'{result[0][2]} Pipeline Tracker - Welcome {result[0][1].title().split("@")[0]}')

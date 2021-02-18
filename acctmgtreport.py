@@ -19,7 +19,7 @@ def acct_mgt_report(c, conn, result, today1, thisweek, thismonth, month, year):
         [1, 0.5, 5.5, 0.5])
 
     all_team = ['All']+psql.read_sql(
-        '''SELECT DISTINCT vertical FROM datatable WHERE vertical IN ('IMTO','PSP','Ent & NFIs') ''', conn).vertical.tolist()
+        '''SELECT DISTINCT vertical FROM datatable WHERE vertical IN ('IMTO','PSP','Tech & OFI') ''', conn).vertical.tolist()
 
     team_name = col1t.multiselect(
         'Select Vertical', all_team, ['All'], key='commercial')

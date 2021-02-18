@@ -4,6 +4,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
+
 def gsheet_api_check(SCOPES):
     creds = None
     if os.path.exists('token.pickle'):
@@ -21,7 +22,7 @@ def gsheet_api_check(SCOPES):
     return creds
 
 
-def pull_sheet_data(SCOPES,SPREADSHEET_ID,RANGE_NAME):
+def pull_sheet_data(SCOPES, SPREADSHEET_ID, RANGE_NAME):
     creds = gsheet_api_check(SCOPES)
     service = build('sheets', 'v4', credentials=creds)
     sheet = service.spreadsheets()
@@ -29,7 +30,7 @@ def pull_sheet_data(SCOPES,SPREADSHEET_ID,RANGE_NAME):
         spreadsheetId=SPREADSHEET_ID,
         range=RANGE_NAME).execute()
     values = result.get('values', [])
-    
+
     if not values:
         print('No data found.')
     else:
@@ -38,4 +39,3 @@ def pull_sheet_data(SCOPES,SPREADSHEET_ID,RANGE_NAME):
         data = rows.get('values')
         print("COMPLETE: Data copied")
         return data
-
