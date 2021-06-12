@@ -1,4 +1,4 @@
-tpv,tpc,fee,currency,date,merchant,country,user_id,subProduct,Product,Month,Week
+TPV,TPC,Fees,Currency,Date,Customername,country,userid,SubProduct,Product,Month,Week
 13131.23,1,0.123,NGN,05/05/2021,Testing1,NG,213311,Wallet Funding,Barter,6,23
 13135.23,1,0.2232,NGN,05/06/2021,Testing2,NG,213312,Wallet Funding,Barter,6,23
 13139.23,1,0.3234,NGN,05/07/2021,Testing3,NG,213313,Wallet Funding,Barter,6,23
