@@ -1,4 +1,4 @@
-Name,Account ID,Vpcmerchant,Card Type,Certificate URL,Currency,Host,Mcc,Mid,Password1,Password2,Transaction Type
+Name2,Account ID,Vpcmerchant,Card Type,Certificate URL,Currency,Host,Mcc,Mid,Password1,Password2,Transaction Type
 MPGS,67345,COVENANT,VC,,NGN,https://flutterwave.gateway.mastercard.com/,8999,FLWZB01,32c3dbfd025a8f1be1fdfc0528d7a43a,32c3dbfd025a8f1be1fdfc0528d7a43a,PURCHASE
 MPGS,67345,COVENANT,MC,,NGN,https://flutterwave.gateway.mastercard.com/,8999,FLWZB01,32c3dbfd025a8f1be1fdfc0528d7a43a,32c3dbfd025a8f1be1fdfc0528d7a43a,PURCHASE
 CYBERSOURCE,67345,COVENANT,VC,,NGN,N/A,8999,3057FL4P,N/A,N/A,PURCHASE
