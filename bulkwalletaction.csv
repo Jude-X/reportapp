@@ -1,0 +1,5 @@
+MerchantId,MerchantName,Currency,Amount,Action,source
+109933,SUB Forrest Green,NGN,100,credit,rave
+109934,Iamobicodes,EUR,5,debit,rave
+109936,Oyinkansayomi,GBP,200,credit,confluence
+109937,BARRON BOY,GHS,1,debit,confluence
