@@ -1,5 +1,5 @@
-MerchantId,MerchantName,Currency,Amount,Action,source
-109933,SUB Forrest Green,NGN,100,credit,rave
-109934,Iamobicodes,EUR,5,credit,rave
-109936,Oyinkansayomi,GBP,200,credit,confluence
-109937,BARRON BOY,GHS,1,credit,confluence
+MerchantId,MerchantName,Currency,Amount,Action,Source,Remark
+109933,SUB Forrest Green,NGN,100,credit,rave,Customer is being credited
+109934,Iamobicodes,EUR,5,credit,rave,Customer is being credited
+109936,Oyinkansayomi,GBP,200,credit,confluence,Customer is being credited
+109937,BARRON BOY,GHS,1,credit,confluence,Customer is being credited
